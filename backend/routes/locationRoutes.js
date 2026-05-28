@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Location = require('../models/Location');
+const authMiddleware = require('../middleware/auth');
+
 
 // GET /api/locations → alle Standorte
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const locations = await Location.find();
     res.json(locations);
@@ -13,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/locations/:id → ein Standort
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const location = await Location.findById(req.params.id);
     if (!location) {
@@ -26,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/locations → neuen Standort erstellen
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const newLocation = new Location(req.body);
     const savedLocation = await newLocation.save();
@@ -37,7 +39,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/locations/:id → Standort aktualisieren
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const updatedLocation = await Location.findByIdAndUpdate(
       req.params.id,
@@ -54,7 +56,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/locations/:id → Standort loeschen
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const deletedLocation = await Location.findByIdAndDelete(req.params.id);
     if (!deletedLocation) {

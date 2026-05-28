@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const authMiddleware = require('../middleware/auth');
 
 // GET /api/products > alle Produkte abrufen
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const products = await Product.find().populate('location');
+    const products = await Product.find().populate('location').populate('category');
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/products/:id → ein einzelnes Produkt abrufen
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('location');
     if (!product) {
@@ -26,7 +27,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/products > neues Produkt erstellen
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const newProduct = new Product(req.body);
     const savedProduct = await newProduct.save();
@@ -37,7 +38,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/products/:id → ein Produkt aktualisieren
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
@@ -54,7 +55,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/products/:id → ein Produkt loeschen
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
     if (!deletedProduct) {

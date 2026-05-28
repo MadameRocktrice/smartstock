@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Category = require('../models/Category');
+const authMiddleware = require('../middleware/auth');
+
 
 // GET /api/categories → alle Kategorien
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const categories = await Category.find();
     res.json(categories);
@@ -13,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/categories/:id → eine Kategorie
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
@@ -26,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/categories → neue Kategorie erstellen
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const newCategory = new Category(req.body);
     const savedCategory = await newCategory.save();
@@ -37,7 +39,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/categories/:id → Kategorie aktualisieren
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const updatedCategory = await Category.findByIdAndUpdate(
       req.params.id,
@@ -54,7 +56,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/categories/:id → Kategorie loeschen
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const deletedCategory = await Category.findByIdAndDelete(req.params.id);
     if (!deletedCategory) {
