@@ -26,9 +26,9 @@ const userSchema = new mongoose.Schema({
 });
 
 // Passwort automatisch hashen, bevor es gespeichert wird
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function() {
   // Nur hashen, wenn das Passwort neu oder geändert wurde
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return;
   
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
