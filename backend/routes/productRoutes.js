@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // GET /api/products > alle Produkte abrufen
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate('location');
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 // GET /api/products/:id → ein einzelnes Produkt abrufen
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('location');
     if (!product) {
       return res.status(404).json({ message: 'Produkt nicht gefunden' });
     }

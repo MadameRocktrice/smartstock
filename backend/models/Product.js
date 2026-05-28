@@ -24,6 +24,14 @@ const productSchema = new mongoose.Schema({
   },
   expiryDate: {
     type: Date
+  },
+    location: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Location'
+  },
+  category: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Category'
   }
 }, {
   timestamps: true

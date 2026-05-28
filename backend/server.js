@@ -4,6 +4,8 @@ const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
+const locationRoutes = require('./routes/locationRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 // Datenbank verbinden
 connectDB();
@@ -23,6 +25,8 @@ app.get('/', (req, res) => {
 
 // API-Routen
 app.use('/api/products', productRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Server starten
 app.listen(PORT, () => {
