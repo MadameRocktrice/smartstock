@@ -9,6 +9,11 @@ const locationSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
+  }, 
+  household: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Household',
+    required: true
   }
 }, {
   timestamps: true

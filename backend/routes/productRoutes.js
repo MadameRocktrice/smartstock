@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const authMiddleware = require('../middleware/auth');
+const Household = require('../models/Household');
 
 // GET /api/products > alle Produkte abrufen
 router.get('/', authMiddleware, async (req, res) => {
@@ -29,6 +30,21 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // POST /api/products > neues Produkt erstellen
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    // Prüfen, ob household mitgeschickt wurde
+    if (!req.body.household) {
+      return res.status(400).json({ message: 'Haushalt-ID fehlt' });
+    }
+    
+    // Pruefen, ob User Mitglied dieses Haushalts ist
+    const household = await Household.findById(req.body.household);
+    
+    if (!household) {
+      return res.status(404).json({ message: 'Haushalt nicht gefunden' });
+    }
+    
+    if (!household.members.some(m => m.equals(req.user.userId))) {
+      return res.status(403).json({ message: 'Du bist kein Mitglied dieses Haushalts' });
+    }
     const newProduct = new Product(req.body);
     const savedProduct = await newProduct.save();
     res.status(201).json(savedProduct);
