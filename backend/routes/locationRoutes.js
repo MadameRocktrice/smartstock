@@ -2,95 +2,102 @@ const express = require('express');
 const router = express.Router();
 const Location = require('../models/Location');
 const authMiddleware = require('../middleware/auth');
-const Household = require('../models/Household');
 const getUserHouseholds = require('../middleware/getUserHouseholds');
+const pickUpdateFields = require('../utils/pickUpdateFields');
+const validateObjectId = require('../middleware/validateObjectId');
+const { sendServerError, sendClientError } = require('../utils/errorResponse');
 
 router.use(authMiddleware);
 router.use(getUserHouseholds);
+router.param('id', validateObjectId);
 
 // GET /api/locations → alle Standorte
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const locations = await Location.find({ 
-      household: { $in: req.userHouseholds } 
+    const locations = await Location.find({
+      household: { $in: req.userHouseholds },
     });
     res.json(locations);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
 // GET /api/locations/:id → ein Standort
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const location = await Location.findById(req.params.id);
-    if (!req.userHouseholds.some(h => h.equals(location.household))) {
+    if (!location) {
+      return res.status(404).json({ message: 'Standort nicht gefunden' });
+    }
+    if (!req.userHouseholds.some((h) => h.equals(location.household))) {
       return res.status(403).json({ message: 'Kein Zugriff auf diesen Standort' });
     }
     res.json(location);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
 // POST /api/locations → neuen Standort erstellen
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    if (!req.body.household) {
+    const data = pickUpdateFields(req.body, ['name', 'description', 'household']);
+
+    if (!data.household) {
       return res.status(400).json({ message: 'Haushalt-ID fehlt' });
     }
-    
-    if (!req.userHouseholds.some(h => h.equals(req.body.household))) {
+
+    if (!req.userHouseholds.some((h) => h.equals(data.household))) {
       return res.status(403).json({ message: 'Du bist kein Mitglied dieses Haushalts' });
     }
-    
-    const newLocation = new Location(req.body);
-    const savedLocation = await newLocation.save();
+
+    const savedLocation = await new Location(data).save();
     res.status(201).json(savedLocation);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    sendClientError(res, error);
   }
 });
 
 // PUT /api/locations/:id → Standort aktualisieren
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const location = await Location.findById(req.params.id);
-    
+
     if (!location) {
       return res.status(404).json({ message: 'Standort nicht gefunden' });
     }
-    
-    if (!req.userHouseholds.some(h => h.equals(location.household))) {
+
+    if (!req.userHouseholds.some((h) => h.equals(location.household))) {
       return res.status(403).json({ message: 'Kein Zugriff auf diesen Standort' });
     }
-    
-    Object.assign(location, req.body);
+
+    Object.assign(location, pickUpdateFields(req.body, ['name', 'description']));
     const updatedLocation = await location.save();
-    
+
     res.json(updatedLocation);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    sendClientError(res, error);
   }
 });
 
-// DELETE /api/locations/:id > Standort löschen
-router.delete('/:id', authMiddleware, async (req, res) => {
+// DELETE /api/locations/:id → Standort löschen
+router.delete('/:id', async (req, res) => {
   try {
     const location = await Location.findById(req.params.id);
-    
+
     if (!location) {
       return res.status(404).json({ message: 'Standort nicht gefunden' });
     }
-    
-    if (!req.userHouseholds.some(h => h.equals(location.household))) {
+
+    if (!req.userHouseholds.some((h) => h.equals(location.household))) {
       return res.status(403).json({ message: 'Kein Zugriff auf diesen Standort' });
     }
-    
+
     await Location.findByIdAndDelete(req.params.id);
     res.json({ message: 'Standort gelöscht' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 

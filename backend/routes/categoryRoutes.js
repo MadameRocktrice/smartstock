@@ -2,95 +2,102 @@ const express = require('express');
 const router = express.Router();
 const Category = require('../models/Category');
 const authMiddleware = require('../middleware/auth');
-const Household = require('../models/Household');
 const getUserHouseholds = require('../middleware/getUserHouseholds');
+const pickUpdateFields = require('../utils/pickUpdateFields');
+const validateObjectId = require('../middleware/validateObjectId');
+const { sendServerError, sendClientError } = require('../utils/errorResponse');
 
 router.use(authMiddleware);
 router.use(getUserHouseholds);
+router.param('id', validateObjectId);
 
 // GET /api/categories → alle Kategorien
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find({ 
-      household: { $in: req.userHouseholds } 
+    const categories = await Category.find({
+      household: { $in: req.userHouseholds },
     });
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
 // GET /api/categories/:id → eine Kategorie
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-    if (!req.userHouseholds.some(h => h.equals(category.household))) {
+    if (!category) {
+      return res.status(404).json({ message: 'Kategorie nicht gefunden' });
+    }
+    if (!req.userHouseholds.some((h) => h.equals(category.household))) {
       return res.status(403).json({ message: 'Kein Zugriff auf diese Kategorie' });
     }
     res.json(category);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
 // POST /api/categories → neue Kategorie erstellen
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    if (!req.body.household) {
+    const data = pickUpdateFields(req.body, ['name', 'description', 'household']);
+
+    if (!data.household) {
       return res.status(400).json({ message: 'Haushalt-ID fehlt' });
     }
-    
-    if (!req.userHouseholds.some(h => h.equals(req.body.household))) {
+
+    if (!req.userHouseholds.some((h) => h.equals(data.household))) {
       return res.status(403).json({ message: 'Du bist kein Mitglied dieses Haushalts' });
     }
-    
-    const newCategory = new Category(req.body);
-    const savedCategory = await newCategory.save();
+
+    const savedCategory = await new Category(data).save();
     res.status(201).json(savedCategory);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    sendClientError(res, error);
   }
 });
 
 // PUT /api/categories/:id → Kategorie aktualisieren
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-    
+
     if (!category) {
       return res.status(404).json({ message: 'Kategorie nicht gefunden' });
     }
-    
-    if (!req.userHouseholds.some(h => h.equals(category.household))) {
+
+    if (!req.userHouseholds.some((h) => h.equals(category.household))) {
       return res.status(403).json({ message: 'Kein Zugriff auf diese Kategorie' });
     }
-    
-    Object.assign(category, req.body);
+
+    Object.assign(category, pickUpdateFields(req.body, ['name', 'description']));
     const updatedCategory = await category.save();
-    
+
     res.json(updatedCategory);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    sendClientError(res, error);
   }
 });
 
 // DELETE /api/categories/:id → Kategorie loeschen
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-    
+
     if (!category) {
       return res.status(404).json({ message: 'Kategorie nicht gefunden' });
     }
-    
-    if (!req.userHouseholds.some(h => h.equals(category.household))) {
+
+    if (!req.userHouseholds.some((h) => h.equals(category.household))) {
       return res.status(403).json({ message: 'Kein Zugriff auf diese Kategorie' });
     }
-    
+
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: 'Kategorie gelöscht' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 

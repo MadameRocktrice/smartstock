@@ -2,10 +2,16 @@ const express = require('express');
 const router = express.Router();
 const Household = require('../models/Household');
 const User = require('../models/User');
+const Product = require('../models/Product');
+const Category = require('../models/Category');
+const Location = require('../models/Location');
+const ShoppingListItem = require('../models/ShoppingListItem');
 const authMiddleware = require('../middleware/auth');
+const validateObjectId = require('../middleware/validateObjectId');
+const { sendServerError, sendClientError } = require('../utils/errorResponse');
 
-// Alle Haushalt-Routen sind geschützt
 router.use(authMiddleware);
+router.param('id', validateObjectId);
 
 // POST /api/households → neuen Haushalt erstellen
 router.post('/', async (req, res) => {
@@ -13,77 +19,73 @@ router.post('/', async (req, res) => {
     const newHousehold = new Household({
       name: req.body.name,
       owner: req.user.userId,
-      members: [req.user.userId]
+      members: [req.user.userId],
     });
-    
+
     const savedHousehold = await newHousehold.save();
-    
-    // Den User auch zum Haushalt-Array hinzufuegen
+
     await User.findByIdAndUpdate(req.user.userId, {
-      $push: { households: savedHousehold._id }
+      $push: { households: savedHousehold._id },
     });
-    
+
     res.status(201).json(savedHousehold);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    sendClientError(res, error);
   }
 });
 
-// POST /api/households/:id/invite > User per Email zum Haushalt hinzufügen
+// POST /api/households/:id/invite → User per Email zum Haushalt hinzufügen
 router.post('/:id/invite', async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     const household = await Household.findById(req.params.id);
-    
+
     if (!household) {
       return res.status(404).json({ message: 'Haushalt nicht gefunden' });
     }
-    
-    // Nur Mitglieder duerfen einladen
-    if (!household.members.some(m => m.equals(req.user.userId))) {
+
+    if (!household.members.some((m) => m.equals(req.user.userId))) {
       return res.status(403).json({ message: 'Du bist kein Mitglied dieses Haushalts' });
     }
-    
-    // User per Email suchen
+
     const userToInvite = await User.findOne({ email });
-    
+
     if (!userToInvite) {
       return res.status(404).json({ message: 'Kein User mit dieser Email gefunden' });
     }
-    
-    // Pruefen, ob User schon Mitglied ist
-    if (household.members.some(m => m.equals(userToInvite._id))) {
+
+    if (household.members.some((m) => m.equals(userToInvite._id))) {
       return res.status(400).json({ message: 'User ist bereits Mitglied' });
     }
-    
-    // User zum Haushalt hinzufuegen
+
     household.members.push(userToInvite._id);
     await household.save();
-    
-    // Haushalt zur User-Liste hinzufuegen
+
     userToInvite.households.push(household._id);
     await userToInvite.save();
-    
-    res.json({ 
+
+    res.json({
       message: 'User erfolgreich hinzugefügt',
-      household: household 
+      household,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
 // GET /api/households → alle Haushalte des eingeloggten Users
 router.get('/', async (req, res) => {
   try {
-    const households = await Household.find({ 
-      members: req.user.userId 
-    }).populate('members', 'username email').populate('owner', 'username email');
-    
+    const households = await Household.find({
+      members: req.user.userId,
+    })
+      .populate('members', 'username email')
+      .populate('owner', 'username email');
+
     res.json(households);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
@@ -93,71 +95,75 @@ router.get('/:id', async (req, res) => {
     const household = await Household.findById(req.params.id)
       .populate('members', 'username email')
       .populate('owner', 'username email');
-    
+
     if (!household) {
       return res.status(404).json({ message: 'Haushalt nicht gefunden' });
     }
-    
-    // Pruefen, ob der User Mitglied ist
-    if (!household.members.some(m => m._id.equals(req.user.userId))) {
+
+    if (!household.members.some((m) => m._id.equals(req.user.userId))) {
       return res.status(403).json({ message: 'Du bist kein Mitglied dieses Haushalts' });
     }
-    
+
     res.json(household);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
-// PUT /api/households/:id > Haushalt aktualisieren (nur Owner)
+// PUT /api/households/:id → Haushalt aktualisieren (nur Owner)
 router.put('/:id', async (req, res) => {
   try {
     const household = await Household.findById(req.params.id);
-    
+
     if (!household) {
       return res.status(404).json({ message: 'Haushalt nicht gefunden' });
     }
-    
-    // Nur der Owner darf ändern
+
     if (!household.owner.equals(req.user.userId)) {
       return res.status(403).json({ message: 'Nur der Owner darf den Haushalt ändern' });
     }
-    
+
     household.name = req.body.name || household.name;
     const updatedHousehold = await household.save();
-    
+
     res.json(updatedHousehold);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    sendClientError(res, error);
   }
 });
 
-// DELETE /api/households/:id > Haushalt löschen (nur Owner)
+// DELETE /api/households/:id → Haushalt löschen (nur Owner)
 router.delete('/:id', async (req, res) => {
   try {
     const household = await Household.findById(req.params.id);
-    
+
     if (!household) {
       return res.status(404).json({ message: 'Haushalt nicht gefunden' });
     }
-    
-    // Nur der Owner darf löschen
+
     if (!household.owner.equals(req.user.userId)) {
       return res.status(403).json({ message: 'Nur der Owner darf den Haushalt löschen' });
     }
-    
-    // Den Haushalt aus den User-Listen aller Mitglieder entfernen
+
+    const householdId = household._id;
+
+    await Promise.all([
+      Product.deleteMany({ household: householdId }),
+      Category.deleteMany({ household: householdId }),
+      Location.deleteMany({ household: householdId }),
+      ShoppingListItem.deleteMany({ household: householdId }),
+    ]);
+
     await User.updateMany(
       { _id: { $in: household.members } },
-      { $pull: { households: household._id } }
+      { $pull: { households: householdId } }
     );
-    
-    // Den Haushalt selbst löschen
+
     await Household.findByIdAndDelete(req.params.id);
-    
+
     res.json({ message: 'Haushalt gelöscht' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendServerError(res, error);
   }
 });
 
