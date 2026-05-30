@@ -8,6 +8,7 @@ const locationRoutes = require('./routes/locationRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const userRoutes = require('./routes/userRoutes');
 const householdRoutes = require('./routes/householdRoutes');
+const shoppingListRoutes = require('./routes/shoppingListRoutes');
 
 // Datenbank verbinden
 connectDB();
@@ -31,6 +32,7 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/households', householdRoutes);
+app.use('/api/shoppinglist', shoppingListRoutes);
 
 // Server starten
 app.listen(PORT, () => {
