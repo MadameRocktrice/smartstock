@@ -40,6 +40,18 @@ router.get('/', async (req, res) => {
       .populate('category')
       .populate('addedBy', 'username')
       .populate('household', 'name');
+    
+      items.sort((a, b) => {
+        // Erst nach isBought sortieren (offene Einträge zuerst)
+        if (a.isBought !== b.isBought) {
+          return a.isBought ? 1 : -1;
+        }
+        
+        // Dann nach Kategorie-Name (alphabetisch)
+        const catA = a.category?.name || 'zzz';
+        const catB = b.category?.name || 'zzz';
+        return catA.localeCompare(catB);
+      });
 
     res.json(items);
   } catch (error) {
