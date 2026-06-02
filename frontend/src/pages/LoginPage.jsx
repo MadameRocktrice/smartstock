@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { theme } from '../theme/theme';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -88,6 +88,24 @@ const ErrorBanner = styled.div`
   font-size: 14px;
 `;
 
+const SwitchLink = styled.p`
+  text-align: center;
+  margin-top: 24px;
+  color: ${theme.colors.textSecondary};
+  font-size: 14px;
+  
+  a {
+    color: ${theme.colors.primary};
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 4px;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
 function LoginPage() {
     const navigate = useNavigate();
     const formik = useFormik({
@@ -97,7 +115,7 @@ function LoginPage() {
     },
     validationSchema: Yup.object({
       email: Yup.string()
-        .email('Bitte eine gueltige Email eingeben')
+        .email('Bitte eine gültige Email eingeben')
         .required('Email ist ein Pflichtfeld'),
       password: Yup.string()
         .min(6, 'Passwort muss mindestens 6 Zeichen lang sein')
@@ -136,7 +154,7 @@ function LoginPage() {
   return (
     <PageContainer>
       <Title>SmartStock</Title>
-      <Subtitle>Willkommen zurueck!</Subtitle>
+      <Subtitle>Willkommen zurück!</Subtitle>
 
       {formik.status && (
   <ErrorBanner>{formik.status}</ErrorBanner>
@@ -173,6 +191,9 @@ function LoginPage() {
         
         <Button type="submit">Einloggen</Button>
       </Form>
+      <SwitchLink>
+        Noch kein Konto?<Link to="/register">Hier registrieren</Link>
+      </SwitchLink>
     </PageContainer>
   );
 }

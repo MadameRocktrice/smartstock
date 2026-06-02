@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import BottomNav from './components/BottomNav';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProductsPage from './pages/ProductsPage';
 import ShoppingListPage from './pages/ShoppingListPage';
 import HouseholdPage from './pages/HouseholdPage';
 import ProfilePage from './pages/ProfilePage';
+import RegisterPage from './pages/RegisterPage';
 
 const AppContainer = styled.div`
   padding-bottom: 80px; // Platz für die Bottom-Nav
@@ -21,11 +23,33 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/shoppinglist" element={<ShoppingListPage />} />
-          <Route path="/household" element={<HouseholdPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/products" element={
+            <ProtectedRoute>
+              <ProductsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/shoppinglist" element={
+            <ProtectedRoute>
+              <ShoppingListPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/household" element={
+            <ProtectedRoute>
+              <HouseholdPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
         </Routes>
         <BottomNav />
       </AppContainer>

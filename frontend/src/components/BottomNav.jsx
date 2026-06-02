@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { theme } from '../theme/theme';
+import { useLocation } from 'react-router-dom';
 
 const Nav = styled.nav`
   position: fixed;
@@ -37,6 +38,12 @@ const Icon = styled.span`
 `;
 
 function BottomNav() {
+  const location = useLocation();
+  
+  // Auf der Login-Seite keine Bottom-Nav anzeigen
+  if (location.pathname === '/login' || location.pathname === '/register') {
+  return null;
+}
   return (
     <Nav>
       <NavItem to="/dashboard">
