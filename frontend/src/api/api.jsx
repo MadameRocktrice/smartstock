@@ -1,6 +1,6 @@
 const API_URL = 'http://localhost:5001/api';
 
-// Hilfsfunktion fuer Requests mit Token
+// Hilfsfunktion für Requests mit Token
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('token');
   
@@ -30,9 +30,20 @@ export const api = {
   getCategories: () => apiRequest('/categories'),
   getLocations: () => apiRequest('/locations'),
 
-  // Neue Funktion fuer Produkte erstellen
+  // Produkt erstellen
   createProduct: (productData) => apiRequest('/products', {
     method: 'POST',
     body: JSON.stringify(productData),
+  }),
+
+    // Produkt updaten
+  updateProduct: (id, data) => apiRequest(`/products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+
+  // Produkt löschen
+  deleteProduct: (id) => apiRequest(`/products/${id}`, {
+    method: 'DELETE',
   }),
 };
