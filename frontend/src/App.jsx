@@ -10,6 +10,7 @@ import ShoppingListPage from './pages/ShoppingListPage';
 import HouseholdPage from './pages/HouseholdPage';
 import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
+import AddProductPage from './pages/AddProductPage';
 
 const AppContainer = styled.div`
   padding-bottom: 80px; // Platz für die Bottom-Nav
@@ -33,6 +34,11 @@ function App() {
           <Route path="/products" element={
             <ProtectedRoute>
               <ProductsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/products/new" element={
+            <ProtectedRoute>
+              <AddProductPage />
             </ProtectedRoute>
           } />
           <Route path="/shoppinglist" element={

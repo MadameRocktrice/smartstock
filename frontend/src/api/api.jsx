@@ -29,4 +29,10 @@ export const api = {
   getHouseholds: () => apiRequest('/households'),
   getCategories: () => apiRequest('/categories'),
   getLocations: () => apiRequest('/locations'),
+
+  // Neue Funktion fuer Produkte erstellen
+  createProduct: (productData) => apiRequest('/products', {
+    method: 'POST',
+    body: JSON.stringify(productData),
+  }),
 };

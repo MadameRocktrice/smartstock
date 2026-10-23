@@ -1,72 +1,134 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import plusIcon from '../assets/icons/plus.svg';
 import { theme } from '../theme/theme';
-import { useLocation } from 'react-router-dom';
 
-const Nav = styled.nav`
+// Deine eigenen Icons importieren
+import dashboardIcon from '../assets/icons/dashboard.svg';
+import pantryIcon from '../assets/icons/pantry.svg';
+import cartIcon from '../assets/icons/cart.svg';
+import userIcon from '../assets/icons/user.svg';
+
+const NavWrapper = styled.div`
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: ${theme.colors.cardBackground};
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+  z-index: 100;
+`;
+
+const NavBar = styled.nav`
+  position: relative;
+  background-color: ${theme.colors.bottomNav};
+  border-radius: ${theme.radius.pill};
+  display: flex;
   align-items: center;
-  padding: 12px 0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-  border-top: 1px solid ${theme.colors.border};
+  justify-content: space-between;
+  padding: 14px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: ${theme.shadow.elevated};
+  pointer-events: auto;
 `;
 
 const NavItem = styled(NavLink)`
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
   text-decoration: none;
-  color: ${theme.colors.textSecondary};
-  font-size: 11px;
-  font-weight: 500;
   
   &.active {
-    color: ${theme.colors.primary};
+    opacity: 1;
+  }
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  img {
+    width: 40px;
+    height: 40px;
   }
 `;
 
-const Icon = styled.span`
-  font-size: 22px;
+const FabSpacer = styled.div`
+  width: 56px;
+`;
+
+const Fab = styled.button`
+  position: absolute;
+  top: -33px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: ${theme.colors.primary};
+  border: 5px solid ${theme.colors.background};
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: translateX(-50%) scale(1.05);
+  }
+  
+  &:active {
+    transform: translateX(-50%) scale(0.95);
+  }
 `;
 
 function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   
-  // Auf der Login-Seite keine Bottom-Nav anzeigen
   if (location.pathname === '/login' || location.pathname === '/register') {
-  return null;
-}
+    return null;
+  }
+  
+  const handleFabClick = () => {
+    if (location.pathname === '/products') {
+      navigate('/products/new');
+    } else if (location.pathname === '/shoppinglist') {
+      console.log('Manueller Einkaufslisten-Eintrag (kommt später)');
+    } else {
+      navigate('/products/new');
+    }
+  };
+  
   return (
-    <Nav>
-      <NavItem to="/dashboard">
-        <Icon>🏠</Icon>
-        Dashboard
-      </NavItem>
-      <NavItem to="/products">
-        <Icon>📦</Icon>
-        Vorrat
-      </NavItem>
-      <NavItem to="/shoppinglist">
-        <Icon>🛒</Icon>
-        Einkauf
-      </NavItem>
-      <NavItem to="/household">
-        <Icon>👥</Icon>
-        Haushalt
-      </NavItem>
-      <NavItem to="/profile">
-        <Icon>⚙️</Icon>
-        Profil
-      </NavItem>
-    </Nav>
+    <NavWrapper>
+      <NavBar>
+        <NavItem to="/dashboard">
+          <img src={dashboardIcon} alt="Dashboard" />
+        </NavItem>
+
+        <NavItem to="/products">
+          <img src={pantryIcon} alt="Vorräte" />
+        </NavItem>
+        
+        <FabSpacer />
+        <Fab onClick={handleFabClick} aria-label="Hinzufügen">
+          <img src={plusIcon} alt="Hinzufügen" width="50" height="50" />
+        </Fab>
+        
+        <NavItem to="/shoppinglist">
+          <img src={cartIcon} alt="Einkaufsliste" />
+        </NavItem>
+        <NavItem to="/profile">
+          <img src={userIcon} alt="Profil" />
+        </NavItem>
+      </NavBar>
+    </NavWrapper>
   );
 }
 

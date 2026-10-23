@@ -4,13 +4,28 @@
   padding: 0;
 }
 
-body {
+html, body {
   font-family: 'Inter', sans-serif;
   background-color: #FAF6F0;
-  color: #1F2D24;
+  color: #3c3c3c;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
   font-family: 'Fraunces', serif;
+  font-weight: 900;
+}
+
+button {
+  font-family: 'Inter', sans-serif;
+}
+
+input, select, textarea {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Kein blauer Outline bei Inputs */
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: none;
 }
