@@ -8,6 +8,9 @@ import shopViewIcon from '../assets/icons/shop-view.svg';
 import emptyViewIcon from '../assets/icons/empty-view.svg';
 import expireViewIcon from '../assets/icons/expire-view.svg';
 import searchIcon from '../assets/icons/search.svg';
+import cartIcon from '../assets/icons/cart-neg.svg';
+import warningRedIcon from '../assets/icons/warning-red.svg';
+import warningYellowIcon from '../assets/icons/warning-yellow.svg';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -201,8 +204,8 @@ const DateText = styled.span`
 `;
 
 const WarnIcon = styled.span`
-  color: ${(props) => props.$critical ? theme.colors.signal : theme.colors.secondary};
-  font-size: 20px;
+  isplay: flex;
+  align-items: center;
   margin-right: ${theme.spacing.sm};
 `;
 
@@ -363,7 +366,7 @@ const expiringCount = expiringProducts.length;
                 >
                   {product.currentAmount}/{product.minAmount}
                 </ItemBadge>
-                <CartButton aria-label="Auf Einkaufsliste">🛒</CartButton>
+                <CartButton aria-label="Auf Einkaufsliste"><img src={cartIcon} alt="" width="40" height="40" /></CartButton>
               </ListItem>
             ))}
           </ItemList>
@@ -383,7 +386,14 @@ const expiringCount = expiringProducts.length;
           <ItemList>
             {expiringProducts.slice(0, 3).map((product) => (
               <ListItem key={product._id}>
-                <WarnIcon $critical={isCritical(product.expiryDate)}>⚠</WarnIcon>
+                <WarnIcon>
+                  <img 
+                    src={isCritical(product.expiryDate) ? warningRedIcon : warningYellowIcon} 
+                    alt="" 
+                    width="40" 
+                    height="40" 
+                  />
+                </WarnIcon>
                 <ItemName>{product.name}</ItemName>
                 <DateText>{formatDate(product.expiryDate)}</DateText>
               </ListItem>
