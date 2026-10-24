@@ -3,6 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate, Link } from 'react-router-dom';
 import { theme } from '../theme/theme';
+import { useAuth } from '../hooks/useAuth';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -134,6 +135,7 @@ const SwitchLink = styled.p`
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const formik = useFormik({
     initialValues: {
@@ -158,29 +160,13 @@ function RegisterPage() {
         .required('Bitte Passwort bestätigen'),
     }),
     onSubmit: async (values, { setStatus }) => {
-      try {
-        const { passwordConfirm, ...registerData } = values;
-
-        const response = await fetch('http://localhost:5001/api/users/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(registerData),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setStatus(data.message || 'Registrierung fehlgeschlagen');
-          return;
-        }
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/dashboard');
-      } catch (error) {
-        setStatus('Verbindung zum Server fehlgeschlagen');
-      }
-    },
+  try {
+    await register(values.username, values.email, values.password);
+    navigate('/dashboard');
+  } catch (error) {
+    setStatus(error.message || 'Registrierung fehlgeschlagen');
+  }
+},
   });
 
   return (

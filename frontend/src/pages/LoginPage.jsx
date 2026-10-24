@@ -3,6 +3,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate, Link } from 'react-router-dom';
 import { theme } from '../theme/theme';
+import { useAuth } from '../hooks/useAuth';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -134,6 +135,7 @@ const SwitchLink = styled.p`
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const formik = useFormik({
     initialValues: {
@@ -149,28 +151,14 @@ function LoginPage() {
         .required('Passwort ist ein Pflichtfeld'),
     }),
     onSubmit: async (values, { setStatus }) => {
-      try {
-        const response = await fetch('http://localhost:5001/api/users/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setStatus(data.message || 'Login fehlgeschlagen');
-          return;
+        try {
+          await login(values.email, values.password);
+          navigate('/dashboard');
+        } catch (error) {
+          setStatus(error.message || 'Login fehlgeschlagen');
         }
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/dashboard');
-      } catch (error) {
-        setStatus('Verbindung zum Server fehlgeschlagen');
-      }
-    },
-  });
+      },
+    });
 
   return (
     <PageContainer>
