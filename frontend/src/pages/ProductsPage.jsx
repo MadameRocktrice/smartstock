@@ -1,8 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
 import searchIcon from '../assets/icons/search.svg';
+import filterIcon from '../assets/icons/filter.svg';
+import moreIcon from '../assets/icons/more.svg';
+import editIcon from '../assets/icons/edit.svg';
+import deleteIcon from '../assets/icons/delete.svg';
+
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -26,8 +32,8 @@ const SearchInputWrapper = styled.div`
   box-shadow: ${theme.shadow.card};
   
   img {
-    width: 20px;
-    height: 20px;
+    width: 40px;
+    height: 40px;
     margin-right: ${theme.spacing.sm};
     opacity: 0.6;
   }
@@ -187,40 +193,91 @@ const AmountValue = styled.span`
   text-align: center;
 `;
 
+const MoreButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  img {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+const MenuWrapper = styled.div`
+  position: relative;
+`;
+
+const Menu = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: ${theme.colors.cardBackground};
+  border-radius: ${theme.radius.md};
+  box-shadow: ${theme.shadow.elevated};
+  overflow: hidden;
+  z-index: 10;
+  min-width: 160px;
+`;
+
+const MenuItem = styled.button`
+  width: 100%;
+  padding: ${theme.spacing.xs} ${theme.spacing.xs};
+  border: none;
+  background: ${(props) => props.$variant === 'danger' ? theme.colors.signal : theme.colors.primary};
+  color: white;
+  font-family: ${theme.fonts.body};
+  font-size: ${theme.fontSize.md};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  text-align: left;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+  
+  img {
+    width: 40px;
+    height: 40px;
+  }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: ${theme.spacing.xxl} ${theme.spacing.lg};
   color: ${theme.colors.textSecondary};
 `;
 
-const Title = styled.h1`
-  font-family: ${theme.fonts.heading};
-  font-size: ${theme.fontSize.title};
-  color: ${theme.colors.primary};
-  margin-bottom: ${theme.spacing.sm};
-`;
-
-const Subtitle = styled.p`
-  font-size: ${theme.fontSize.md};
-  color: ${theme.colors.textPrimary};
-  margin-bottom: ${theme.spacing.xl};
-`;
-
-const Placeholder = styled.div`
-  background-color: ${theme.colors.cardBackground};
-  border-radius: ${theme.radius.lg};
-  padding: ${theme.spacing.xl};
-  text-align: center;
-  color: ${theme.colors.textSecondary};
-`;
 
 function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('alle');
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadProducts();
+  }, []);
+
+  // Menu schliessen bei Klick ausserhalb
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   async function loadProducts() {
@@ -290,6 +347,27 @@ function ProductsPage() {
     }
   };
 
+  const handleEdit = (productId) => {
+    setOpenMenuId(null);
+    navigate(`/products/${productId}/edit`);
+  };
+
+  const handleDelete = async (product) => {
+    setOpenMenuId(null);
+    const confirmed = window.confirm(
+      `Möchtest du "${product.name}" wirklich löschen?`
+    );
+    if (!confirmed) return;
+    
+    try {
+      await api.deleteProduct(product._id);
+      loadProducts();
+    } catch (err) {
+      console.error('Fehler beim Löschen:', err);
+      alert('Produkt konnte nicht gelöscht werden');
+    }
+  };
+
   return (
     <Container>
             <SearchBar>
@@ -300,7 +378,7 @@ function ProductsPage() {
             type="text"
           />
         </SearchInputWrapper>
-        <FilterButton aria-label="Filter">⚙</FilterButton>
+        <FilterButton aria-label="Filter" ><img src={filterIcon} alt="" width="48" height="48"/> </FilterButton>
       </SearchBar>
 
       <TabsRow>
@@ -359,6 +437,31 @@ function ProductsPage() {
                         +
                       </AmountButton>
                     </AmountPill>
+                    <MenuWrapper ref={openMenuId === product._id ? menuRef : null}>
+                      <MoreButton
+                        onClick={() =>
+                          setOpenMenuId(openMenuId === product._id ? null : product._id)
+                        }
+                        aria-label="Mehr Optionen"
+                      >
+                        <img src={moreIcon} alt="" />
+                      </MoreButton>
+                      {openMenuId === product._id && (
+                        <Menu>
+                          <MenuItem onClick={() => handleEdit(product._id)}>
+                            <img src={editIcon} alt="" />
+                            Bearbeiten
+                          </MenuItem>
+                          <MenuItem
+                            $variant="danger"
+                            onClick={() => handleDelete(product)}
+                          >
+                            <img src={deleteIcon} alt="" />
+                            Löschen
+                          </MenuItem>
+                        </Menu>
+                      )}
+                    </MenuWrapper>
                   </ProductItem>
                 );
               })}

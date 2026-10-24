@@ -7,111 +7,141 @@ import { api } from '../api/api';
 import { theme } from '../theme/theme';
 
 const PageContainer = styled.div`
-  padding: 24px;
+  padding: ${theme.spacing.lg};
   max-width: 600px;
   margin: 0 auto;
 `;
 
 const Title = styled.h1`
-  margin-bottom: 24px;
-  color: ${theme.colors.textPrimary};
+  font-family: ${theme.fonts.heading};
+  font-size: ${theme.fontSize.xxl};
+  font-weight: ${theme.fontWeight.black};
+  color: ${theme.colors.primary};
+  margin-bottom: ${theme.spacing.lg};
+  line-height: 1.1;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: ${theme.spacing.lg};
 `;
 
 const Field = styled.div`
   display: flex;
   flex-direction: column;
+  gap: ${theme.spacing.sm};
 `;
 
 const Label = styled.label`
-  font-size: 14px;
-  font-weight: 500;
+  font-size: ${theme.fontSize.md};
   color: ${theme.colors.textPrimary};
-  margin-bottom: 4px;
+  font-weight: ${theme.fontWeight.regular};
+  padding-left: 20px;
 `;
 
 const Input = styled.input`
-  padding: 14px 16px;
-  border: 1px solid ${(props) => (props.$hasError ? theme.colors.lowStock : theme.colors.border)};
-  border-radius: ${theme.radius.md};
-  font-size: 16px;
-  font-family: 'Inter', sans-serif;
+  padding: 16px 20px;
+  border: none;
+  border-radius: ${theme.radius.pill};
+  font-size: ${theme.fontSize.md};
+  font-family: ${theme.fonts.body};
   background-color: ${theme.colors.cardBackground};
+  color: ${theme.colors.textPrimary};
+  box-shadow: ${(props) => (props.$hasError ? `0 0 0 2px ${theme.colors.signal}` : 'none')};
+  
+  &::placeholder {
+    color: ${theme.colors.textSecondary};
+  }
   
   &:focus {
-    outline: none;
-    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 2px ${theme.colors.primary};
   }
 `;
 
 const Select = styled.select`
-  padding: 14px 16px;
-  border: 1px solid ${(props) => (props.$hasError ? theme.colors.lowStock : theme.colors.border)};
-  border-radius: ${theme.radius.md};
-  font-size: 16px;
-  font-family: 'Inter', sans-serif;
+  padding: 16px 20px;
+  border: none;
+  border-radius: ${theme.radius.pill};
+  font-size: ${theme.fontSize.md};
+  font-family: ${theme.fonts.body};
   background-color: ${theme.colors.cardBackground};
+  color: ${theme.colors.textPrimary};
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231F2D24' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 20px center;
+  padding-right: 48px;
+  box-shadow: ${(props) => (props.$hasError ? `0 0 0 2px ${theme.colors.signal}` : 'none')};
   
   &:focus {
     outline: none;
-    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 2px ${theme.colors.primary};
   }
 `;
 
 const ErrorText = styled.p`
-  color: ${theme.colors.lowStock};
-  font-size: 13px;
-  margin-top: 4px;
+  color: ${theme.colors.signal};
+  font-size: ${theme.fontSize.sm};
+  padding-left: 20px;
 `;
 
 const Row = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: ${theme.spacing.md};
 `;
 
 const Button = styled.button`
   background-color: ${theme.colors.primary};
   color: white;
-  padding: 14px;
+  padding: 18px;
   border: none;
-  border-radius: ${theme.radius.md};
-  font-size: 16px;
-  font-weight: 600;
-  font-family: 'Inter', sans-serif;
+  border-radius: ${theme.radius.pill};
+  font-size: ${theme.fontSize.md};
+  font-weight: ${theme.fontWeight.semibold};
+  font-family: ${theme.fonts.body};
   cursor: pointer;
-  margin-top: 16px;
+  margin-top: ${theme.spacing.md};
   
   &:hover {
     opacity: 0.9;
   }
+  
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 
-const CancelButton = styled(Button)`
+const CancelButton = styled.button`
   background-color: transparent;
   color: ${theme.colors.textSecondary};
-  border: 1px solid ${theme.colors.border};
+  padding: 18px;
+  border: none;
+  font-size: ${theme.fontSize.md};
+  font-family: ${theme.fonts.body};
+  cursor: pointer;
+  
+  &:hover {
+    color: ${theme.colors.textPrimary};
+  }
 `;
 
 const ErrorBanner = styled.div`
-  background-color: ${theme.colors.lowStock};
-  color: white;
-  padding: 12px 16px;
+  background-color: ${theme.colors.signalLight};
+  color: ${theme.colors.signal};
+  padding: ${theme.spacing.md};
   border-radius: ${theme.radius.md};
-  margin-bottom: 16px;
-  font-size: 14px;
+  margin-bottom: ${theme.spacing.md};
+  font-size: ${theme.fontSize.sm};
+  text-align: center;
 `;
 
 const LoadingMessage = styled.p`
   text-align: center;
   color: ${theme.colors.textSecondary};
-  padding: 40px;
+  padding: ${theme.spacing.xxl};
 `;
 
 function AddProductPage() {
@@ -121,7 +151,6 @@ function AddProductPage() {
   const [households, setHouseholds] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Beim Laden: Kategorien, Standorte und Haushalte holen
   useEffect(() => {
     async function loadFormData() {
       try {
@@ -175,7 +204,6 @@ function AddProductPage() {
     }),
     onSubmit: async (values, { setStatus }) => {
       try {
-        // Leeres Ablaufdatum entfernen
         const dataToSend = { ...values };
         if (!dataToSend.expiryDate) {
           delete dataToSend.expiryDate;
@@ -192,25 +220,25 @@ function AddProductPage() {
   if (loading) {
     return (
       <PageContainer>
-        <Title>Neues Produkt</Title>
-        <LoadingMessage>Lade Formular-Daten...</LoadingMessage>
+        <Title>Produkt hinzufügen</Title>
+        <LoadingMessage>Lade Daten...</LoadingMessage>
       </PageContainer>
     );
   }
   
   return (
     <PageContainer>
-      <Title>Neues Produkt</Title>
+      <Title>Produkt hinzufügen</Title>
       
       {formik.status && <ErrorBanner>{formik.status}</ErrorBanner>}
       
       <Form onSubmit={formik.handleSubmit}>
         <Field>
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">Produktname</Label>
           <Input
             id="name"
             type="text"
-            placeholder="z.B. Vollmilch"
+            placeholder="z.B. Milch"
             $hasError={formik.touched.name && formik.errors.name}
             {...formik.getFieldProps('name')}
           />
@@ -235,50 +263,6 @@ function AddProductPage() {
           </Select>
           {formik.touched.household && formik.errors.household && (
             <ErrorText>{formik.errors.household}</ErrorText>
-          )}
-        </Field>
-        
-        <Row>
-          <Field>
-            <Label htmlFor="currentAmount">Aktuelle Menge</Label>
-            <Input
-              id="currentAmount"
-              type="number"
-              placeholder="z.B. 3"
-              $hasError={formik.touched.currentAmount && formik.errors.currentAmount}
-              {...formik.getFieldProps('currentAmount')}
-            />
-            {formik.touched.currentAmount && formik.errors.currentAmount && (
-              <ErrorText>{formik.errors.currentAmount}</ErrorText>
-            )}
-          </Field>
-          
-          <Field>
-            <Label htmlFor="minAmount">Mindestmenge</Label>
-            <Input
-              id="minAmount"
-              type="number"
-              placeholder="z.B. 1"
-              $hasError={formik.touched.minAmount && formik.errors.minAmount}
-              {...formik.getFieldProps('minAmount')}
-            />
-            {formik.touched.minAmount && formik.errors.minAmount && (
-              <ErrorText>{formik.errors.minAmount}</ErrorText>
-            )}
-          </Field>
-        </Row>
-        
-        <Field>
-          <Label htmlFor="unit">Einheit</Label>
-          <Input
-            id="unit"
-            type="text"
-            placeholder="z.B. Liter, Stück, g"
-            $hasError={formik.touched.unit && formik.errors.unit}
-            {...formik.getFieldProps('unit')}
-          />
-          {formik.touched.unit && formik.errors.unit && (
-            <ErrorText>{formik.errors.unit}</ErrorText>
           )}
         </Field>
         
@@ -321,6 +305,50 @@ function AddProductPage() {
         </Field>
         
         <Field>
+          <Label htmlFor="unit">Masseinheit</Label>
+          <Input
+            id="unit"
+            type="text"
+            placeholder="z.B. Liter, Stück, g"
+            $hasError={formik.touched.unit && formik.errors.unit}
+            {...formik.getFieldProps('unit')}
+          />
+          {formik.touched.unit && formik.errors.unit && (
+            <ErrorText>{formik.errors.unit}</ErrorText>
+          )}
+        </Field>
+        
+        <Row>
+          <Field>
+            <Label htmlFor="currentAmount">Aktuell</Label>
+            <Input
+              id="currentAmount"
+              type="number"
+              placeholder="z.B. 3"
+              $hasError={formik.touched.currentAmount && formik.errors.currentAmount}
+              {...formik.getFieldProps('currentAmount')}
+            />
+            {formik.touched.currentAmount && formik.errors.currentAmount && (
+              <ErrorText>{formik.errors.currentAmount}</ErrorText>
+            )}
+          </Field>
+          
+          <Field>
+            <Label htmlFor="minAmount">Minimum</Label>
+            <Input
+              id="minAmount"
+              type="number"
+              placeholder="z.B. 1"
+              $hasError={formik.touched.minAmount && formik.errors.minAmount}
+              {...formik.getFieldProps('minAmount')}
+            />
+            {formik.touched.minAmount && formik.errors.minAmount && (
+              <ErrorText>{formik.errors.minAmount}</ErrorText>
+            )}
+          </Field>
+        </Row>
+        
+        <Field>
           <Label htmlFor="expiryDate">Ablaufdatum (optional)</Label>
           <Input
             id="expiryDate"
@@ -329,7 +357,7 @@ function AddProductPage() {
           />
         </Field>
         
-        <Button type="submit">Produkt anlegen</Button>
+        <Button type="submit">Hinzufügen</Button>
         <CancelButton type="button" onClick={() => navigate('/products')}>
           Abbrechen
         </CancelButton>
