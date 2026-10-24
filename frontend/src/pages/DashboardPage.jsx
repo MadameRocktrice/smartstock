@@ -4,6 +4,7 @@ import cartIcon from '../assets/icons/cart-neg.svg';
 import emptyViewIcon from '../assets/icons/empty-view.svg';
 import expireViewIcon from '../assets/icons/expire-view.svg';
 import searchIcon from '../assets/icons/search.svg';
+import closeIcon from '../assets/icons/close.svg';
 import shopViewIcon from '../assets/icons/shop-view.svg';
 import warningRedIcon from '../assets/icons/warning-red.svg';
 import warningYellowIcon from '../assets/icons/warning-yellow.svg';
@@ -11,6 +12,7 @@ import { useProducts } from '../hooks/useProducts';
 import { useShoppingList } from '../hooks/useShoppingList';
 import { theme } from '../theme/theme';
 import { api } from '../api/api';
+import { useState } from 'react';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -49,6 +51,103 @@ const SearchButton = styled.button`
   &:hover {
     opacity: 0.9;
   }
+`;
+
+const SearchBarWrapper = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+  margin-bottom: ${theme.spacing.md};
+`;
+
+const SearchInputContainer = styled.div`
+  flex: 1;
+  position: relative;
+  
+  img {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  height:48px;
+  padding: ${theme.spacing.md} ${theme.spacing.lg};
+  padding-left: 65px;
+  border: none;
+  border-radius: ${theme.radius.pill};
+  background-color: ${theme.colors.cardBackground};
+  box-shadow: ${theme.shadow.card};
+  font-size: ${theme.fontSize.md};
+  font-family: ${theme.fonts.body};
+  color: ${theme.colors.textPrimary};
+  
+  &::placeholder {
+    color: ${theme.colors.textSecondary};
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px ${theme.colors.primary};
+  }
+`;
+
+const CloseSearchButton = styled.button`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: ${theme.colors.cardBackground};
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: ${theme.shadow.card};
+  flex-shrink: 0;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+const SearchResults = styled.div`
+  background-color: ${theme.colors.cardBackground};
+  border-radius: ${theme.radius.lg};
+  padding: ${theme.spacing.md};
+  box-shadow: ${theme.shadow.card};
+  margin-bottom: ${theme.spacing.xl};
+`;
+
+const ResultsSectionTitle = styled.div`
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textSecondary};
+  margin-top: ${theme.spacing.sm};
+  margin-bottom: ${theme.spacing.xs};
+  text-transform: uppercase;
+`;
+
+const ResultItem = styled(Link)`
+  display: block;
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  color: ${theme.colors.textPrimary};
+  text-decoration: none;
+  border-radius: ${theme.radius.md};
+  
+  &:hover {
+    background-color: ${theme.colors.background};
+  }
+`;
+
+const NoResults = styled.p`
+  color: ${theme.colors.textSecondary};
+  text-align: center;
+  padding: ${theme.spacing.md};
 `;
 
 const Subtitle = styled.p`
@@ -244,6 +343,8 @@ const EmptyText = styled.p`
 function DashboardPage() {
   const { products, loading: productsLoading } = useProducts();
   const { items: shoppingList, loading: shoppingLoading, reload: reloadShopping } = useShoppingList();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const loading = productsLoading || shoppingLoading;
 
   // Berechnungen für die Kacheln
@@ -297,6 +398,16 @@ function DashboardPage() {
     return daysUntil <= 3;
   };
 
+    // Suchergebnisse berechnen – nur wenn Suche offen und was eingetippt
+    const query = searchQuery.toLowerCase().trim();
+    const matchingProducts = query === '' ? [] : products.filter((p) => 
+      p.name.toLowerCase().includes(query)
+    );
+    const matchingShopping = query === '' ? [] : shoppingList.filter((item) => {
+      const name = item.product?.name || item.name || '';
+      return name.toLowerCase().includes(query);
+    });
+
 
     async function handleToggleShopping(item) {
     try {
@@ -331,11 +442,71 @@ function DashboardPage() {
     <Container>
       <Header>
         <Title>{getGreeting()}</Title>
-        <SearchButton aria-label="Suchen" >
+        {!searchOpen && (
+        <SearchButton aria-label="Suchen" 
+        onClick={() => setSearchOpen(true)}
+        >
           <img src={searchIcon} alt="" width="40" height="40" />
         </SearchButton>
+        )}
       </Header>
       <Subtitle>Dein Haushalt auf einen Blick</Subtitle>
+          {searchOpen && (
+      <>
+        <SearchBarWrapper>
+        <SearchInputContainer>
+          <img src={searchIcon} alt="" />
+          <SearchInput
+            type="text"
+            placeholder="Produkt oder Eintrag suchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+        </SearchInputContainer>
+        <CloseSearchButton
+          aria-label="Suche schliessen"
+          onClick={() => {
+            setSearchOpen(false);
+            setSearchQuery('');
+          }}
+        >
+          <img src={closeIcon} alt="" width="48" height="48" />
+        </CloseSearchButton>
+      </SearchBarWrapper>
+
+        {query !== '' && (
+          <SearchResults>
+            {matchingProducts.length === 0 && matchingShopping.length === 0 ? (
+              <NoResults>Keine Treffer für "{searchQuery}"</NoResults>
+            ) : (
+              <>
+                {matchingProducts.length > 0 && (
+                  <>
+                    <ResultsSectionTitle>Vorräte</ResultsSectionTitle>
+                    {matchingProducts.slice(0, 5).map((p) => (
+                      <ResultItem key={p._id} to={`/products/${p._id}/edit`}>
+                        {p.name}
+                      </ResultItem>
+                    ))}
+                  </>
+                )}
+                {matchingShopping.length > 0 && (
+                  <>
+                    <ResultsSectionTitle>Einkaufsliste</ResultsSectionTitle>
+                    {matchingShopping.slice(0, 5).map((item) => (
+                      <ResultItem key={item._id} to="/shoppinglist">
+                        {item.product?.name || item.name}
+                      </ResultItem>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </SearchResults>
+        )}
+      </>
+    )}
 
       <StatsGrid>
         <StatCard to="/shoppinglist">
