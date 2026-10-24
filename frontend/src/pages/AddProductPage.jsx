@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import styled from 'styled-components';
+import * as Yup from 'yup';
 import { api } from '../api/api';
+import { useFormData } from '../hooks/useFormData';
 import { theme } from '../theme/theme';
 
 const PageContainer = styled.div`
@@ -145,31 +144,7 @@ const LoadingMessage = styled.p`
 `;
 
 function AddProductPage() {
-  const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [households, setHouseholds] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    async function loadFormData() {
-      try {
-        const [cats, locs, hhs] = await Promise.all([
-          api.getCategories(),
-          api.getLocations(),
-          api.getHouseholds(),
-        ]);
-        setCategories(cats);
-        setLocations(locs);
-        setHouseholds(hhs);
-      } catch (err) {
-        console.error('Fehler beim Laden:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadFormData();
-  }, []);
+  const { categories, locations, households, loading } = useFormData();
   
   const formik = useFormik({
     initialValues: {
