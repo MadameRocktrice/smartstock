@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { api } from '../api/api';
-import { theme } from '../theme/theme';
-
-import shopViewIcon from '../assets/icons/shop-view.svg';
+import cartIcon from '../assets/icons/cart-neg.svg';
 import emptyViewIcon from '../assets/icons/empty-view.svg';
 import expireViewIcon from '../assets/icons/expire-view.svg';
 import searchIcon from '../assets/icons/search.svg';
-import cartIcon from '../assets/icons/cart-neg.svg';
+import shopViewIcon from '../assets/icons/shop-view.svg';
 import warningRedIcon from '../assets/icons/warning-red.svg';
 import warningYellowIcon from '../assets/icons/warning-yellow.svg';
+import { useProducts } from '../hooks/useProducts';
+import { useShoppingList } from '../hooks/useShoppingList';
+import { theme } from '../theme/theme';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -217,27 +216,9 @@ const EmptyText = styled.p`
 `;
 
 function DashboardPage() {
-  const [products, setProducts] = useState([]);
-  const [shoppingList, setShoppingList] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [productsData, shoppingData] = await Promise.all([
-          api.getProducts(),
-          api.getShoppingList(),
-        ]);
-        setProducts(productsData);
-        setShoppingList(shoppingData);
-      } catch (err) {
-        console.error('Fehler beim Laden:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { products, loading: productsLoading } = useProducts();
+  const { items: shoppingList, loading: shoppingLoading } = useShoppingList();
+  const loading = productsLoading || shoppingLoading;
 
   // Berechnungen für die Kacheln
   const openShoppingItems = shoppingList.filter((item) => !item.isBought);
