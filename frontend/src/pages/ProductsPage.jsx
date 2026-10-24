@@ -264,6 +264,7 @@ function ProductsPage() {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'alle';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [searchQuery, setSearchQuery] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
@@ -282,17 +283,26 @@ function ProductsPage() {
 
   // Produkte nach Tab filtern
   const filteredProducts = products.filter((p) => {
-    if (activeTab === 'knapp') {
-      return p.currentAmount <= p.minAmount;
-    }
+        // Erst Tab-Filter
+    if (activeTab === 'knapp' && p.currentAmount > p.minAmount) return false;
     if (activeTab === 'ablaufend') {
       if (!p.expiryDate) return false;
       const daysUntil = Math.ceil(
         (new Date(p.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
       );
-      return daysUntil <= 7;
+      if (daysUntil > 7) return false;
     }
-    return true; // 'alle'
+    
+    // Dann Such-Filter
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      const nameMatch = p.name.toLowerCase().includes(query);
+      const categoryMatch = p.category?.name?.toLowerCase().includes(query);
+      const locationMatch = p.location?.name?.toLowerCase().includes(query);
+      return nameMatch || categoryMatch || locationMatch;
+    }
+    
+    return true;
   });
 
     // Gruppieren nach Standort
@@ -365,6 +375,8 @@ function ProductsPage() {
           <SearchInput 
             placeholder="Produkt suchen" 
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </SearchInputWrapper>
         <FilterButton aria-label="Filter" ><img src={filterIcon} alt="" width="48" height="48"/> </FilterButton>
