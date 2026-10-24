@@ -11,6 +11,7 @@ import HouseholdPage from './pages/HouseholdPage';
 import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
 import AddProductPage from './pages/AddProductPage';
+import EditProductPage from './pages/EditProductPage';
 
 const AppContainer = styled.div`
   padding-bottom: 80px; // Platz für die Bottom-Nav
@@ -54,6 +55,10 @@ function App() {
           <Route path="/profile" element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/products/:id/edit" element={
+            <ProtectedRoute><EditProductPage />
             </ProtectedRoute>
           } />
         </Routes>

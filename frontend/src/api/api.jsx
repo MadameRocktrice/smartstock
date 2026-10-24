@@ -25,6 +25,7 @@ async function apiRequest(endpoint, options = {}) {
 // Konkrete Funktionen
 export const api = {
   getProducts: () => apiRequest('/products'),
+  getProduct: (id) => apiRequest(`/products/${id}`),
   getShoppingList: () => apiRequest('/shoppinglist'),
   getHouseholds: () => apiRequest('/households'),
   getCategories: () => apiRequest('/categories'),
