@@ -148,7 +148,7 @@ const ProductItem = styled.div`
 `;
 
 const ProductName = styled.span`
-  color: ${theme.colors.textPrimary};
+  color: ${theme.colors.primary};
   font-weight: ${theme.fontWeight.bold};
   font-size: ${theme.fontSize.md};
   flex: 1;
