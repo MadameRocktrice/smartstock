@@ -47,4 +47,15 @@ export const api = {
   deleteProduct: (id) => apiRequest(`/products/${id}`, {
     method: 'DELETE',
   }),
+
+  // Produkt auf Einkaufsliste aktualisieren
+  updateShoppingItem: (id, data) => apiRequest(`/shoppinglist/${id}`, {
+  method: 'PUT',
+  body: JSON.stringify(data),
+  }),
+
+  // Produkt auf Einkaufsliste lösche
+  deleteShoppingItem: (id) => apiRequest(`/shoppinglist/${id}`, {
+    method: 'DELETE',
+  }),
 };

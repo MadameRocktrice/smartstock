@@ -117,7 +117,7 @@ const SectionHeader = styled.div`
 
 const SectionTitle = styled.h2`
   font-family: ${theme.fonts.body};
-  font-size: ${theme.fontSize.xl};
+  font-size: ${theme.fontSize.lg};
   font-weight: ${theme.fontWeight.regular};
   color: ${theme.colors.textPrimary};
 `;
@@ -151,13 +151,13 @@ const ListItem = styled.div`
 `;
 
 const ItemAmount = styled.span`
-  color: ${theme.colors.primary};
+  color: ${theme.colors.textPrimary};
   font-size: ${theme.fontSize.md};
   min-width: 60px;
 `;
 
 const ItemName = styled.span`
-  color: ${theme.colors.primary};
+  color: ${theme.colors.textPrimary};
   font-weight: ${theme.fontWeight.bold};
   font-size: ${theme.fontSize.md};
   flex: 1;
@@ -199,7 +199,7 @@ const CartButton = styled.button`
 `;
 
 const DateText = styled.span`
-  color: ${theme.colors.primary};
+  color: ${theme.colors.textPrimary};
   font-size: ${theme.fontSize.sm};
 `;
 
