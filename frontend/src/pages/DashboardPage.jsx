@@ -552,8 +552,8 @@ function DashboardPage() {
           <ItemList>
             {openShoppingItems.slice(0, 3).map((item) => (
               <ListItem key={item._id}>
-                <ItemAmount>{item.quantity} Stk.</ItemAmount>
-                <ItemName>{item.productName || item.name}</ItemName>
+                <ItemAmount>{item.quantity} {item.unit || 'Stk.'}</ItemAmount>
+                <ItemName>{item.product?.name || item.name}</ItemName>
                 <Checkbox onClick={() => handleToggleShopping(item)} />
               </ListItem>
             ))}
