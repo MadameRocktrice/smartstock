@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
+import { useProducts } from '../hooks/useProducts';
 import searchIcon from '../assets/icons/search.svg';
 import filterIcon from '../assets/icons/filter.svg';
 import moreIcon from '../assets/icons/more.svg';
 import editIcon from '../assets/icons/edit.svg';
 import deleteIcon from '../assets/icons/delete.svg';
+
 
 
 const Container = styled.div`
@@ -258,16 +260,11 @@ const EmptyState = styled.div`
 
 
 function ProductsPage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading, reload } = useProducts();
   const [activeTab, setActiveTab] = useState('alle');
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
 
   // Menu schliessen bei Klick ausserhalb
   useEffect(() => {
@@ -280,16 +277,6 @@ function ProductsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  async function loadProducts() {
-    try {
-      const data = await api.getProducts();
-      setProducts(data);
-    } catch (err) {
-      console.error('Fehler beim Laden:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   // Produkte nach Tab filtern
   const filteredProducts = products.filter((p) => {
@@ -341,7 +328,7 @@ function ProductsPage() {
     const newAmount = Math.max(0, product.currentAmount + delta);
     try {
       await api.updateProduct(product._id, { currentAmount: newAmount });
-      loadProducts();
+      reload();
     } catch (err) {
       console.error('Fehler beim Aktualisieren:', err);
     }
@@ -361,7 +348,7 @@ function ProductsPage() {
     
     try {
       await api.deleteProduct(product._id);
-      loadProducts();
+      reload();
     } catch (err) {
       console.error('Fehler beim Löschen:', err);
       alert('Produkt konnte nicht gelöscht werden');
