@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
+import { useShoppingList } from '../hooks/useShoppingList';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
 import searchIcon from '../assets/icons/search.svg';
@@ -184,24 +185,8 @@ const EmptyState = styled.div`
 `;
 
 function ShoppingListPage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('alle');
-
-  useEffect(() => {
-    loadItems();
-  }, []);
-
-  async function loadItems() {
-    try {
-      const data = await api.getShoppingList();
-      setItems(data);
-    } catch (err) {
-      console.error('Fehler beim Laden:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+      const { items, loading, reload } = useShoppingList();
+      const [activeTab, setActiveTab] = useState('alle');
 
   const filteredItems = items.filter((item) => {
     if (activeTab === 'offen') return !item.isBought;
@@ -231,7 +216,7 @@ function ShoppingListPage() {
   const toggleItem = async (item) => {
     try {
       await api.updateShoppingItem(item._id, { isBought: !item.isBought });
-      loadItems();
+      reload();
     } catch (err) {
       console.error('Fehler beim Abhaken:', err);
     }
