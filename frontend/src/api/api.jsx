@@ -48,6 +48,12 @@ export const api = {
     method: 'DELETE',
   }),
 
+  // Produkt auf Einkaufsliste setzen
+  createShoppingItem: (data) => apiRequest('/shoppinglist', {
+  method: 'POST',
+  body: JSON.stringify(data),
+  }),
+
   // Produkt auf Einkaufsliste aktualisieren
   updateShoppingItem: (id, data) => apiRequest(`/shoppinglist/${id}`, {
   method: 'PUT',

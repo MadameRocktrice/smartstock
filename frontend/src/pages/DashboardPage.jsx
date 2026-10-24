@@ -215,6 +215,12 @@ const CartButton = styled.button`
   &:hover {
     opacity: 0.9;
   }
+
+  &:disabled {
+    background-color: ${theme.colors.border};
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 `;
 
 const DateText = styled.span`
@@ -244,6 +250,13 @@ function DashboardPage() {
   const openShoppingItems = shoppingList.filter((item) => !item.isBought);
   const shoppingCount = openShoppingItems.length;
   
+  // Prüfen: Ist dieses Produkt bereits auf der offenen Einkaufsliste?
+  const isOnShoppingList = (productId) => {
+    return shoppingList.some(
+      (item) => item.product?._id === productId && !item.isBought
+    );
+  };
+
   const lowStockProducts = products.filter(
     (p) => p.currentAmount <= p.minAmount
   );
@@ -293,6 +306,26 @@ function DashboardPage() {
       console.error('Fehler beim Abhaken:', err);
     }
   }
+
+  async function handleAddToShopping(product) {
+  try {
+    // Berechnen: wieviel brauchen wir? (Minimum minus aktueller Bestand, min. 1)
+    const needed = Math.max(1, product.minAmount - product.currentAmount);
+    
+    await api.createShoppingItem({
+      name: product.name,
+      quantity: needed,
+      unit: product.unit,
+      product: product._id,
+      category: product.category?._id || product.category,
+      household: product.household?._id || product.household,
+    });
+    
+    reloadShopping();
+  } catch (err) {
+    console.error('Fehler beim Hinzufuegen:', err);
+  }
+}
 
   return (
     <Container>
@@ -377,7 +410,11 @@ function DashboardPage() {
                 >
                   {product.currentAmount}/{product.minAmount}
                 </ItemBadge>
-                <CartButton aria-label="Auf Einkaufsliste"><img src={cartIcon} alt="" width="40" height="40" /></CartButton>
+                <CartButton aria-label="Auf Einkaufsliste"
+                  onClick={() => handleAddToShopping(product)}
+                  disabled={isOnShoppingList(product._id)}
+                >
+  <img src={cartIcon} alt="" width="40" height="40" /></CartButton>
               </ListItem>
             ))}
           </ItemList>
