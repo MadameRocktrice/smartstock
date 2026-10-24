@@ -187,12 +187,25 @@ const EmptyState = styled.div`
 function ShoppingListPage() {
       const { items, loading, reload } = useShoppingList();
       const [activeTab, setActiveTab] = useState('alle');
+      const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredItems = items.filter((item) => {
-    if (activeTab === 'offen') return !item.isBought;
-    if (activeTab === 'erledigt') return item.isBought;
-    return true;
-  });
+const filteredItems = items.filter((item) => {
+  // Erst Tab-Filter
+  if (activeTab === 'offen' && item.isBought) return false;
+  if (activeTab === 'erledigt' && !item.isBought) return false;
+  
+  // Dann Such-Filter
+  if (searchQuery.trim() !== '') {
+    const query = searchQuery.toLowerCase();
+    const productName = item.product?.name || item.name || '';
+    const categoryName = item.category?.name || '';
+    const nameMatch = productName.toLowerCase().includes(query);
+    const categoryMatch = categoryName.toLowerCase().includes(query);
+    return nameMatch || categoryMatch;
+  }
+  
+  return true;
+});
 
   const groupedByCategory = filteredItems.reduce((groups, item) => {
     const categoryName = item.category?.name || 'Ohne Kategorie';
@@ -227,7 +240,9 @@ function ShoppingListPage() {
       <SearchBar>
         <SearchInputWrapper>
           <img src={searchIcon} alt="" />
-          <SearchInput placeholder="Produkt suchen" type="text" />
+          <SearchInput placeholder="Produkt suchen" type="text" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}/>
         </SearchInputWrapper>
         <FilterButton aria-label="Filter">
           <img src={filterIcon} alt="" width="48" height="48" />
