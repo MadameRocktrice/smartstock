@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFormik } from 'formik';
+import { useFormData } from '../hooks/useFormData';
 import * as Yup from 'yup';
 import styled from 'styled-components';
 import { api } from '../api/api';
@@ -144,32 +145,23 @@ function EditProductPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [households, setHouseholds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [productLoading, setProductLoading] = useState(true);
+  const { categories, locations, households, loading: formDataLoading } = useFormData();
+  const loading = productLoading || formDataLoading;
 
   useEffect(() => {
-    async function loadData() {
+    async function loadProduct() {
       try {
-        const [productData, cats, locs, hhs] = await Promise.all([
-          api.getProduct(id),
-          api.getCategories(),
-          api.getLocations(),
-          api.getHouseholds(),
-        ]);
-        setProduct(productData);
-        setCategories(cats);
-        setLocations(locs);
-        setHouseholds(hhs);
-      } catch (err) {
-        console.error('Fehler beim Laden:', err);
-      } finally {
-        setLoading(false);
-      }
+        const productData = await api.getProduct(id);
+      setProduct(productData);
+    } catch (err) {
+      console.error('Fehler beim Laden:', err);
+    } finally {
+      setProductLoading(false);
     }
-    loadData();
-  }, [id]);
+  }
+  loadProduct();
+}, [id]);
 
   const formik = useFormik({
     enableReinitialize: true,
