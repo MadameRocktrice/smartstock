@@ -13,7 +13,7 @@ import { theme } from '../theme/theme';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
-  max-width: 1200px;
+  max-width: 850px;
   margin: 0 auto;
 `;
 
@@ -235,7 +235,7 @@ function DashboardPage() {
       (new Date(p.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
     );
     return daysUntilExpiry <= 7;  // läuft in 7 Tagen oder weniger ab
-  });
+  }).sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
 const expiringCount = expiringProducts.length;
 
   // Tageszeit-abhängige Begrüssung
