@@ -10,6 +10,7 @@ import warningYellowIcon from '../assets/icons/warning-yellow.svg';
 import { useProducts } from '../hooks/useProducts';
 import { useShoppingList } from '../hooks/useShoppingList';
 import { theme } from '../theme/theme';
+import { api } from '../api/api';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -189,6 +190,12 @@ const Checkbox = styled.div`
   border-radius: 50%;
   border: 2px solid ${theme.colors.primary};
   flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: ${theme.colors.primaryLight};
+  }
 `;
 
 const CartButton = styled.button`
@@ -230,7 +237,7 @@ const EmptyText = styled.p`
 
 function DashboardPage() {
   const { products, loading: productsLoading } = useProducts();
-  const { items: shoppingList, loading: shoppingLoading } = useShoppingList();
+  const { items: shoppingList, loading: shoppingLoading, reload: reloadShopping } = useShoppingList();
   const loading = productsLoading || shoppingLoading;
 
   // Berechnungen für die Kacheln
@@ -249,7 +256,7 @@ function DashboardPage() {
     );
     return daysUntilExpiry <= 7;  // läuft in 7 Tagen oder weniger ab
   }).sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
-const expiringCount = expiringProducts.length;
+  const expiringCount = expiringProducts.length;
 
   // Tageszeit-abhängige Begrüssung
   const getGreeting = () => {
@@ -276,6 +283,16 @@ const expiringCount = expiringProducts.length;
     );
     return daysUntil <= 3;
   };
+
+
+    async function handleToggleShopping(item) {
+    try {
+      await api.updateShoppingItem(item._id, { isBought: !item.isBought });
+      reloadShopping();
+    } catch (err) {
+      console.error('Fehler beim Abhaken:', err);
+    }
+  }
 
   return (
     <Container>
@@ -333,7 +350,7 @@ const expiringCount = expiringProducts.length;
               <ListItem key={item._id}>
                 <ItemAmount>{item.quantity} Stk.</ItemAmount>
                 <ItemName>{item.productName || item.name}</ItemName>
-                <Checkbox />
+                <Checkbox onClick={() => handleToggleShopping(item)} />
               </ListItem>
             ))}
           </ItemList>
