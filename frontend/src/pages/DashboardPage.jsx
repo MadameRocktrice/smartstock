@@ -63,7 +63,7 @@ const StatsGrid = styled.div`
   margin-bottom: ${theme.spacing.xl};
 `;
 
-const StatCard = styled.div`
+const StatCard = styled(Link)`
   background-color: ${theme.colors.cardBackground};
   border-radius: ${theme.radius.lg};
   padding: ${theme.spacing.md};
@@ -71,6 +71,19 @@ const StatCard = styled.div`
   flex-direction: column;
   gap: ${theme.spacing.md};
   box-shadow: ${theme.shadow.card};
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${theme.shadow.elevated};
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 const StatIconWrapper = styled.div`
@@ -275,7 +288,7 @@ const expiringCount = expiringProducts.length;
       <Subtitle>Dein Haushalt auf einen Blick</Subtitle>
 
       <StatsGrid>
-        <StatCard>
+        <StatCard to="/shoppinglist">
           <StatIconWrapper $bgColor={theme.colors.primaryLight}>
             <img src={shopViewIcon} alt="" />
           </StatIconWrapper>
@@ -285,7 +298,7 @@ const expiringCount = expiringProducts.length;
           </div>
         </StatCard>
 
-        <StatCard>
+        <StatCard to="/products?tab=knapp">
           <StatIconWrapper $bgColor={theme.colors.secondaryLight}>
             <img src={emptyViewIcon} alt="" />
           </StatIconWrapper>
@@ -295,7 +308,7 @@ const expiringCount = expiringProducts.length;
           </div>
         </StatCard>
 
-        <StatCard>
+        <StatCard to="/products?tab=ablaufend">
           <StatIconWrapper $bgColor={theme.colors.signalLight}>
             <img src={expireViewIcon} alt="" />
           </StatIconWrapper>

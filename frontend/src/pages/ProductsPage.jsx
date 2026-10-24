@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
@@ -261,7 +261,9 @@ const EmptyState = styled.div`
 
 function ProductsPage() {
   const { products, loading, reload } = useProducts();
-  const [activeTab, setActiveTab] = useState('alle');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'alle';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
