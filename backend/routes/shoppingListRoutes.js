@@ -105,7 +105,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/shoppinglist/:id → Eintrag aktualisieren (z.B. abhaken)
+// PUT /api/shoppinglist/:id – Eintrag aktualisieren (z.B. abhaken)
 router.put('/:id', async (req, res) => {
   try {
     const item = await ShoppingListItem.findById(req.params.id);
@@ -118,8 +118,24 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Kein Zugriff auf diesen Eintrag' });
     }
 
+    // Alten Zustand merken (für Vergleich)
+    const wasBought = item.isBought;
+
+    
+    // Update anwenden
     Object.assign(item, pickUpdateFields(req.body, SHOPPING_LIST_UPDATE_FIELDS));
     const updatedItem = await item.save();
+
+    // Auto-Logik: Wenn Eintrag NEU abgehakt wurde + Produkt verknüpft – Vorrat auffüllen
+    const isNowBought = updatedItem.isBought;
+    if (!wasBought && isNowBought && updatedItem.product) {
+      const Product = require('../models/Product');
+      const product = await Product.findById(updatedItem.product);
+      if (product) {
+        product.currentAmount += updatedItem.quantity;
+        await product.save();
+      }
+    }
 
     res.json(updatedItem);
   } catch (error) {
