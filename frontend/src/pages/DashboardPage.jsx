@@ -288,12 +288,18 @@ const Checkbox = styled.div`
   height: 24px;
   border-radius: 50%;
   border: 2px solid ${theme.colors.primary};
+  background-color: ${(props) => props.$checked ? theme.colors.primary : 'transparent'};
   flex-shrink: 0;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
   transition: background-color 0.2s ease;
   
   &:hover {
-    background-color: ${theme.colors.primaryLight};
+    background-color: ${(props) => props.$checked ? theme.colors.primary : theme.colors.primaryLight};
   }
 `;
 
@@ -341,11 +347,21 @@ const EmptyText = styled.p`
 `;
 
 function DashboardPage() {
-  const { products, loading: productsLoading } = useProducts();
+  const { products, loading: productsLoading, reload: reloadProducts } = useProducts();
   const { items: shoppingList, loading: shoppingLoading, reload: reloadShopping } = useShoppingList();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const loading = productsLoading || shoppingLoading;
+
+  async function handleReduceAmount(product) {
+  try {
+    const newAmount = Math.max(0, product.currentAmount - 1);
+    await api.updateProduct(product._id, { currentAmount: newAmount });
+    reloadProducts();
+  } catch (err) {
+    console.error('Fehler beim Reduzieren:', err);
+  }
+}
 
   // Berechnungen für die Kacheln
   const openShoppingItems = shoppingList.filter((item) => !item.isBought);
@@ -365,6 +381,7 @@ function DashboardPage() {
   
   const expiringProducts = products.filter((p) => {
     if (!p.expiryDate) return false;
+    if (p.currentAmount === 0) return false;
     const daysUntilExpiry = Math.ceil(
       (new Date(p.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
     );
@@ -410,13 +427,14 @@ function DashboardPage() {
 
 
     async function handleToggleShopping(item) {
-    try {
-      await api.updateShoppingItem(item._id, { isBought: !item.isBought });
-      reloadShopping();
-    } catch (err) {
-      console.error('Fehler beim Abhaken:', err);
-    }
+  try {
+    await api.updateShoppingItem(item._id, { isBought: !item.isBought });
+    // Kurz warten, damit User den Haken sieht
+    setTimeout(() => reloadShopping(), 500);
+  } catch (err) {
+    console.error('Fehler beim Abhaken:', err);
   }
+}
 
   async function handleAddToShopping(product) {
   try {
@@ -554,7 +572,12 @@ function DashboardPage() {
               <ListItem key={item._id}>
                 <ItemAmount>{item.quantity} {item.unit || 'Stk.'}</ItemAmount>
                 <ItemName>{item.product?.name || item.name}</ItemName>
-                <Checkbox onClick={() => handleToggleShopping(item)} />
+                <Checkbox 
+  $checked={item.isBought} 
+  onClick={() => handleToggleShopping(item)}
+>
+  {item.isBought && '✓'}
+</Checkbox>
               </ListItem>
             ))}
           </ItemList>
@@ -615,6 +638,10 @@ function DashboardPage() {
                 </WarnIcon>
                 <ItemName>{product.name}</ItemName>
                 <DateText>{formatDate(product.expiryDate)}</DateText>
+                <Checkbox 
+      onClick={() => handleReduceAmount(product)}
+      title={`Noch ${product.currentAmount} ${product.unit || 'Stk.'} – 1 verbrauchen`}
+    />
               </ListItem>
             ))}
           </ItemList>
