@@ -30,11 +30,15 @@ router.use(authMiddleware);
 router.use(getUserHouseholds);
 router.param('id', validateObjectId);
 
-// GET /api/shoppinglist → alle Eintraege aus den Haushalten des Users
+// GET /api/shoppinglist → Einträge des aktiven Haushalts
 router.get('/', async (req, res) => {
   try {
+    if (!req.activeHousehold) {
+      return res.json([]);  // Kein Haushalt → keine Einträge
+    }
+
     const items = await ShoppingListItem.find({
-      household: { $in: req.userHouseholds },
+      household: req.activeHousehold,
     })
       .populate('product')
       .populate('category')

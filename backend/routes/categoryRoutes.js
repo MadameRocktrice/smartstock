@@ -14,8 +14,11 @@ router.param('id', validateObjectId);
 // GET /api/categories → alle Kategorien
 router.get('/', async (req, res) => {
   try {
+    if (!req.activeHousehold) {
+      return res.json([]);
+    }
     const categories = await Category.find({
-      household: { $in: req.userHouseholds },
+      household: req.activeHousehold,
     });
     res.json(categories);
   } catch (error) {

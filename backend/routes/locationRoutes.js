@@ -11,11 +11,14 @@ router.use(authMiddleware);
 router.use(getUserHouseholds);
 router.param('id', validateObjectId);
 
-// GET /api/locations → alle Standorte
+// GET /api/locations → Standorte des aktiven Haushalts
 router.get('/', async (req, res) => {
   try {
+    if (!req.activeHousehold) {
+      return res.json([]);
+    }
     const locations = await Location.find({
-      household: { $in: req.userHouseholds },
+      household: req.activeHousehold,
     });
     res.json(locations);
   } catch (error) {
