@@ -13,7 +13,6 @@ import { useShoppingList } from '../hooks/useShoppingList';
 import { theme } from '../theme/theme';
 import { api } from '../api/api';
 import { useState } from 'react';
-import { useSocket } from '../hooks/useSocket';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -348,7 +347,6 @@ const EmptyText = styled.p`
 `;
 
 function DashboardPage() {
-  useSocket();
   const { products, loading: productsLoading, reload: reloadProducts } = useProducts();
   const { items: shoppingList, loading: shoppingLoading, reload: reloadShopping } = useShoppingList();
   const [searchOpen, setSearchOpen] = useState(false);

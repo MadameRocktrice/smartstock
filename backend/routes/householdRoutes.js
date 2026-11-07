@@ -28,6 +28,31 @@ router.post('/', async (req, res) => {
       $push: { households: savedHousehold._id },
     });
 
+    // Default-Kategorien anlegen
+    const defaultCategories = [
+      'Obst & Gemüse',
+      'Backwaren',
+      'Milchprodukte',
+      'Tiefkühlprodukte',
+      'Getränke',
+      'Haushalt',
+      'Sonstiges',
+    ];
+    await Category.insertMany(
+      defaultCategories.map((name) => ({ name, household: savedHousehold._id }))
+    );
+
+    // Default-Standorte anlegen
+    const defaultLocations = [
+      'Küche',
+      'Kühlschrank',
+      'Tiefkühler',
+      'Vorratsschrank',
+    ];
+    await Location.insertMany(
+      defaultLocations.map((name) => ({ name, household: savedHousehold._id }))
+    );
+
     res.status(201).json(savedHousehold);
   } catch (error) {
     sendClientError(res, error);

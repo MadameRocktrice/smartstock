@@ -340,7 +340,6 @@ function ProductsPage() {
     const newAmount = Math.max(0, product.currentAmount + delta);
     try {
       await api.updateProduct(product._id, { currentAmount: newAmount });
-      reload();
     } catch (err) {
       console.error('Fehler beim Aktualisieren:', err);
     }

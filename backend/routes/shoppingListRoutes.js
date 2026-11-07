@@ -103,13 +103,15 @@ router.post('/', async (req, res) => {
       addedBy: req.user.userId,
     }).save();
 
+    req.io.to(`household_${savedItem.household}`).emit('shoppingItem:created', savedItem);
+
     res.status(201).json(savedItem);
   } catch (error) {
     sendClientError(res, error);
   }
 });
 
-// PUT /api/shoppinglist/:id – Eintrag aktualisieren (z.B. abhaken)
+
 router.put('/:id', async (req, res) => {
   try {
     const item = await ShoppingListItem.findById(req.params.id);
@@ -122,15 +124,14 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Kein Zugriff auf diesen Eintrag' });
     }
 
-    // Alten Zustand merken (für Vergleich)
     const wasBought = item.isBought;
 
-    
-    // Update anwenden
     Object.assign(item, pickUpdateFields(req.body, SHOPPING_LIST_UPDATE_FIELDS));
     const updatedItem = await item.save();
 
-    // Auto-Logik: Wenn Eintrag NEU abgehakt wurde + Produkt verknüpft – Vorrat auffüllen
+    req.io.to(`household_${updatedItem.household}`).emit('shoppingItem:updated', updatedItem);
+
+
     const isNowBought = updatedItem.isBought;
     if (!wasBought && isNowBought && updatedItem.product) {
       const Product = require('../models/Product');
@@ -138,6 +139,8 @@ router.put('/:id', async (req, res) => {
       if (product) {
         product.currentAmount += updatedItem.quantity;
         await product.save();
+
+        req.io.to(`household_${product.household}`).emit('product:updated', product);
       }
     }
 
@@ -147,7 +150,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/shoppinglist/:id → Eintrag loeschen
 router.delete('/:id', async (req, res) => {
   try {
     const item = await ShoppingListItem.findById(req.params.id);
@@ -160,7 +162,12 @@ router.delete('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Kein Zugriff auf diesen Eintrag' });
     }
 
+    const householdId = item.household;
+
     await ShoppingListItem.findByIdAndDelete(req.params.id);
+
+    req.io.to(`household_${householdId}`).emit('shoppingItem:deleted', { _id: req.params.id });
+
     res.json({ message: 'Eintrag gelöscht' });
   } catch (error) {
     sendServerError(res, error);

@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { api } from '../api/api';
 import { useFormData } from '../hooks/useFormData';
 import { theme } from '../theme/theme';
+import { useNavigate } from 'react-router-dom';
 
 const PageContainer = styled.div`
   padding: ${theme.spacing.lg};
@@ -144,6 +145,7 @@ const LoadingMessage = styled.p`
 `;
 
 function AddProductPage() {
+  const navigate = useNavigate();
   const { categories, locations, households, loading } = useFormData();
   
   const formik = useFormik({

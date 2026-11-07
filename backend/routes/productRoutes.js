@@ -70,6 +70,7 @@ router.post('/', async (req, res) => {
     }
 
     const savedProduct = await new Product(data).save();
+    req.io.to(`household_${savedProduct.household}`).emit('product:created', savedProduct);
     res.status(201).json(savedProduct);
   } catch (error) {
     sendClientError(res, error);
@@ -95,6 +96,8 @@ router.put('/:id', async (req, res) => {
     );
     const updatedProduct = await product.save();
 
+    req.io.to(`household_${updatedProduct.household}`).emit('product:updated', updatedProduct);
+
     res.json(updatedProduct);
   } catch (error) {
     sendClientError(res, error);
@@ -114,7 +117,12 @@ router.delete('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Kein Zugriff auf dieses Produkt' });
     }
 
+    const householdId = product.household;
+
     await Product.findByIdAndDelete(req.params.id);
+
+    req.io.to(`household_${householdId}`).emit('product:deleted', { _id: req.params.id });
+
     res.json({ message: 'Produkt gelöscht' });
   } catch (error) {
     sendServerError(res, error);
