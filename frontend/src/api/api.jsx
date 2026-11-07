@@ -29,6 +29,22 @@ export const api = {
   getProduct: (id) => apiRequest(`/products/${id}`),
   getShoppingList: () => apiRequest('/shoppinglist'),
   getHouseholds: () => apiRequest('/households'),
+  getHousehold: (id) => apiRequest(`/households/${id}`),
+  createHousehold: (name) => apiRequest('/households', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  }),
+  updateHousehold: (id, name) => apiRequest(`/households/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name }),
+  }),
+  deleteHousehold: (id) => apiRequest(`/households/${id}`, {
+    method: 'DELETE',
+  }),
+  inviteToHousehold: (id, email) => apiRequest(`/households/${id}/invite`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  }),
   getCategories: () => apiRequest('/categories'),
   getLocations: () => apiRequest('/locations'),
 
