@@ -172,7 +172,7 @@ const CreateButton = styled.button`
 `;
 
 const ErrorText = styled.p`
-  color: #d32f2f;
+  color: #C45F3F;
   font-size: ${theme.fontSize.sm};
   margin-top: ${theme.spacing.sm};
 `;

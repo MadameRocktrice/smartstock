@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
 import AddProductPage from './pages/AddProductPage';
 import EditProductPage from './pages/EditProductPage';
+import HouseholdDetailPage from './pages/HouseholdDetailPage';
 
 const AppContainer = styled.div`
   padding-bottom: 80px; // Platz für die Bottom-Nav
@@ -47,9 +48,9 @@ function App() {
               <ShoppingListPage />
             </ProtectedRoute>
           } />
-          <Route path="/household" element={
+          <Route path="/household/:id" element={
             <ProtectedRoute>
-              <HouseholdPage />
+              <HouseholdDetailPage />
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
