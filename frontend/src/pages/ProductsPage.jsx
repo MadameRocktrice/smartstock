@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
 import { useProducts } from '../hooks/useProducts';
+import { shortUnit, formatAmount } from '../utils/units';
 import searchIcon from '../assets/icons/search.svg';
 import filterIcon from '../assets/icons/filter.svg';
 import moreIcon from '../assets/icons/more.svg';
@@ -189,10 +190,11 @@ const AmountButton = styled.button`
 
 const AmountValue = styled.span`
   color: ${(props) => props.$color};
-  font-size: ${theme.fontSize.lg};
+  font-size: ${theme.fontSize.md};
   font-weight: ${theme.fontWeight.semibold};
-  min-width: 24px;
+  min-width: 60px;
   text-align: center;
+  padding: 0 ${theme.spacing.xs};
 `;
 
 const MoreButton = styled.button`
@@ -335,15 +337,19 @@ function ProductsPage() {
     };
   };
 
-  // Menge anpassen
-  const changeAmount = async (product, delta) => {
-    const newAmount = Math.max(0, product.currentAmount + delta);
-    try {
-      await api.updateProduct(product._id, { currentAmount: newAmount });
-    } catch (err) {
-      console.error('Fehler beim Aktualisieren:', err);
-    }
-  };
+ // Menge anpassen – nutzt product.countStep (oder 1 als Fallback)
+const changeAmount = async (product, direction) => {
+  const step = product.countStep || 1;
+  const newAmountRaw = Math.max(0, product.currentAmount + (direction * step));
+  // Auf 2 Dezimalstellen runden, damit 0.1 + 0.2 nicht 0.30000... wird
+  const newAmount = Math.round(newAmountRaw * 100) / 100;
+  try {
+    await api.updateProduct(product._id, { currentAmount: newAmount });
+    reload();
+  } catch (err) {
+    console.error('Fehler beim Aktualisieren:', err);
+  }
+};
 
   const handleEdit = (productId) => {
     setOpenMenuId(null);
@@ -420,23 +426,23 @@ function ProductsPage() {
                   <ProductItem key={product._id}>
                     <ProductName>{product.name}</ProductName>
                     <AmountPill $bgColor={colors.bg}>
-                      <AmountButton 
-                        $color={colors.color}
-                        onClick={() => changeAmount(product, -1)}
-                        disabled={product.currentAmount === 0}
-                      >
-                        −
-                      </AmountButton>
-                      <AmountValue $color={colors.color}>
-                        {product.currentAmount}
-                      </AmountValue>
-                      <AmountButton 
-                        $color={colors.color}
-                        onClick={() => changeAmount(product, 1)}
-                      >
-                        +
-                      </AmountButton>
-                    </AmountPill>
+                    <AmountButton 
+                      $color={colors.color}
+                      onClick={() => changeAmount(product, -1)}
+                      disabled={product.currentAmount === 0}
+                    >
+                      −
+                    </AmountButton>
+                    <AmountValue $color={colors.color}>
+                      {formatAmount(product.currentAmount)} {shortUnit(product.unit)}
+                    </AmountValue>
+                    <AmountButton 
+                      $color={colors.color}
+                      onClick={() => changeAmount(product, 1)}
+                    >
+                      +
+                    </AmountButton>
+                  </AmountPill>
                     <MenuWrapper ref={openMenuId === product._id ? menuRef : null}>
                       <MoreButton
                         onClick={() =>

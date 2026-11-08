@@ -18,6 +18,11 @@ const productSchema = new mongoose.Schema({
     min: 0,
     default: null,
   },
+  countStep: {
+  type: Number,
+  min: 0,
+  default: 1,
+  },
   unit: {
     type: String,
     default: 'Stueck',

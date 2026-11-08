@@ -13,6 +13,7 @@ import { useShoppingList } from '../hooks/useShoppingList';
 import { theme } from '../theme/theme';
 import { api } from '../api/api';
 import { useState } from 'react';
+import { shortUnit, formatAmount } from '../utils/units';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -355,7 +356,9 @@ function DashboardPage() {
 
   async function handleReduceAmount(product) {
   try {
-    const newAmount = Math.max(0, product.currentAmount - 1);
+    const step = product.countStep || 1;
+    const newAmountRaw = Math.max(0, product.currentAmount - step);
+    const newAmount = Math.round(newAmountRaw * 100) / 100;
     await api.updateProduct(product._id, { currentAmount: newAmount });
     reloadProducts();
   } catch (err) {
@@ -443,8 +446,11 @@ function DashboardPage() {
 
   async function handleAddToShopping(product) {
   try {
-    // Berechnen: wieviel brauchen wir? (Minimum minus aktueller Bestand, min. 1)
-    const needed = Math.max(1, product.minAmount - product.currentAmount);
+    const step = product.countStep || 1;
+    // Mindestens 1 Schritt, oder was zum Minimum fehlt
+    const diff = (product.minAmount || step) - product.currentAmount;
+    const neededRaw = Math.max(step, diff);
+    const needed = Math.round(neededRaw * 100) / 100;
     
     await api.createShoppingItem({
       name: product.name,
@@ -457,7 +463,7 @@ function DashboardPage() {
     
     reloadShopping();
   } catch (err) {
-    console.error('Fehler beim Hinzufuegen:', err);
+    console.error('Fehler beim Hinzufügen:', err);
   }
 }
 
@@ -575,7 +581,7 @@ function DashboardPage() {
           <ItemList>
             {openShoppingItems.slice(0, 3).map((item) => (
               <ListItem key={item._id}>
-                <ItemAmount>{item.quantity} {item.unit || 'Stk.'}</ItemAmount>
+                <ItemAmount>{formatAmount(item.quantity)} {shortUnit(item.unit) || 'Stk.'}</ItemAmount>
                 <ItemName>{item.product?.name || item.name}</ItemName>
                 <Checkbox 
   $checked={item.isBought} 
@@ -605,11 +611,11 @@ function DashboardPage() {
                 <ItemName>{product.name}</ItemName>
                 {product.minAmount != null && (
                 <ItemBadge 
-                  $bgColor={theme.colors.secondaryLight} 
-                  $color={theme.colors.secondary}
-                >
-                  {product.currentAmount}/{product.minAmount}
-                </ItemBadge>
+                $bgColor={theme.colors.secondaryLight} 
+                $color={theme.colors.secondary}
+              >
+                {formatAmount(product.currentAmount)}/{formatAmount(product.minAmount)} {shortUnit(product.unit)}
+              </ItemBadge>
               )}
                 <CartButton aria-label="Auf Einkaufsliste"
                   onClick={() => handleAddToShopping(product)}
@@ -647,7 +653,7 @@ function DashboardPage() {
                 <DateText>{formatDate(product.expiryDate)}</DateText>
                 <Checkbox 
       onClick={() => handleReduceAmount(product)}
-      title={`Noch ${product.currentAmount} ${product.unit || 'Stk.'} – 1 verbrauchen`}
+      title={`Noch ${formatAmount(product.currentAmount)} ${shortUnit(product.unit) || 'Stk.'} – ${product.countStep || 1} verbrauchen`}
     />
               </ListItem>
             ))}

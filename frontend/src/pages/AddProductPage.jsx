@@ -5,6 +5,9 @@ import { api } from '../api/api';
 import { useFormData } from '../hooks/useFormData';
 import { theme } from '../theme/theme';
 import { useNavigate } from 'react-router-dom';
+import { useHouseholds } from '../hooks/useHouseholds';
+import { ALL_UNITS, VARIABLE_UNITS, STEP_OPTIONS, shortUnit } from '../utils/units';
+//                                               ^^^^^^^^^^^^
 
 const PageContainer = styled.div`
   padding: ${theme.spacing.lg};
@@ -49,16 +52,29 @@ const Input = styled.input`
   background-color: ${theme.colors.cardBackground};
   color: ${theme.colors.textPrimary};
   box-shadow: ${(props) => (props.$hasError ? `0 0 0 2px ${theme.colors.signal}` : 'none')};
-  
+  width: 100%;              /* ← NEU: volle Breite */
+  box-sizing: border-box;   /* ← NEU: Padding zählt zur Breite */
+
   &::placeholder {
     color: ${theme.colors.textSecondary};
   }
-  
+
   &:focus {
     box-shadow: 0 0 0 2px ${theme.colors.primary};
   }
-`;
 
+  /* Browser-Spinner bei type="number" entfernen */
+  &[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+`;
 const Select = styled.select`
   padding: 16px 20px;
   border: none;
@@ -146,6 +162,7 @@ const LoadingMessage = styled.p`
 
 function AddProductPage() {
   const navigate = useNavigate();
+  const { activeHousehold } = useHouseholds();
   const { categories, locations, households, loading } = useFormData();
   
   const formik = useFormik({
@@ -154,11 +171,14 @@ function AddProductPage() {
       currentAmount: '',
       minAmount: '',
       unit: '',
+      countStep: 1,
       expiryDate: '',
       category: '',
       location: '',
-      household: '',
+      household: activeHousehold?._id || '',
     },
+    enableReinitialize: true,
+    
     validationSchema: Yup.object({
       name: Yup.string()
         .min(2, 'Name zu kurz')
@@ -226,25 +246,6 @@ function AddProductPage() {
         </Field>
         
         <Field>
-          <Label htmlFor="household">Haushalt</Label>
-          <Select
-            id="household"
-            $hasError={formik.touched.household && formik.errors.household}
-            {...formik.getFieldProps('household')}
-          >
-            <option value="">Bitte wählen...</option>
-            {households.map((hh) => (
-              <option key={hh._id} value={hh._id}>
-                {hh.name}
-              </option>
-            ))}
-          </Select>
-          {formik.touched.household && formik.errors.household && (
-            <ErrorText>{formik.errors.household}</ErrorText>
-          )}
-        </Field>
-        
-        <Field>
           <Label htmlFor="category">Kategorie</Label>
           <Select
             id="category"
@@ -287,14 +288,36 @@ function AddProductPage() {
           <Input
             id="unit"
             type="text"
-            placeholder="z.B. Liter, Stück, g"
+            list="unit-options"
+            placeholder="z.B. Stück, Liter, Gramm"
             $hasError={formik.touched.unit && formik.errors.unit}
             {...formik.getFieldProps('unit')}
           />
+          <datalist id="unit-options">
+            {ALL_UNITS.map((u) => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
           {formik.touched.unit && formik.errors.unit && (
             <ErrorText>{formik.errors.unit}</ErrorText>
           )}
         </Field>
+
+        {VARIABLE_UNITS.includes(formik.values.unit) && (
+        <Field>
+          <Label htmlFor="countStep">Zähler-Schritt</Label>
+          <Select
+            id="countStep"
+            {...formik.getFieldProps('countStep')}
+          >
+            {(STEP_OPTIONS[formik.values.unit] || [1]).map((step) => (
+              <option key={step} value={step}>
+                {step} {shortUnit(formik.values.unit)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
         
         <Row>
           <Field>
