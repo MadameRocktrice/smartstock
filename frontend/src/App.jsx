@@ -21,6 +21,7 @@ const AppContainer = styled.div`
 `;
 
 // Inner-Komponente, damit useSocket den Auth-Context nutzen kann
+// Inner-Komponente, damit useSocket den Auth-Context nutzen kann
 function AppContent() {
   useSocket();  // ← Hier wird die globale Socket-Verbindung aktiviert
 
@@ -67,16 +68,7 @@ function AppContent() {
           </ProtectedRoute>
         } />
       </Routes>
-          return (
-      <AppContainer>
-        <Routes>
-          {}
-        </Routes>
-        <FloatingNote />
-          {}
-        <BottomNav />
-      </AppContainer>
-    );
+      <FloatingNote />
       <BottomNav />
     </AppContainer>
   );
