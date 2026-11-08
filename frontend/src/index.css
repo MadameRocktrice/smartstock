@@ -25,7 +25,6 @@ input, select, textarea {
   font-family: 'Inter', sans-serif;
 }
 
-/* Kein blauer Outline bei Inputs */
 input:focus, select:focus, textarea:focus, button:focus {
   outline: none;
 }

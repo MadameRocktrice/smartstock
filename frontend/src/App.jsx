@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
-
 import BottomNav from './components/BottomNav';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -14,6 +13,7 @@ import RegisterPage from './pages/RegisterPage';
 import AddProductPage from './pages/AddProductPage';
 import EditProductPage from './pages/EditProductPage';
 import { useSocket } from './hooks/useSocket';
+import FloatingNote from './components/FloatingNote';
 
 const AppContainer = styled.div`
   padding-bottom: 80px;
@@ -67,6 +67,16 @@ function AppContent() {
           </ProtectedRoute>
         } />
       </Routes>
+          return (
+      <AppContainer>
+        <Routes>
+          {}
+        </Routes>
+        <FloatingNote />
+          {}
+        <BottomNav />
+      </AppContainer>
+    );
       <BottomNav />
     </AppContainer>
   );

@@ -157,6 +157,35 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PUT /api/households/:id/note → Notiz aktualisieren (alle Mitglieder)
+router.put('/:id/note', async (req, res) => {
+  try {
+    const household = await Household.findById(req.params.id);
+
+    if (!household) {
+      return res.status(404).json({ message: 'Haushalt nicht gefunden' });
+    }
+
+    // Alle MITGLIEDER (nicht nur Owner) dürfen die Notiz ändern
+    if (!household.members.some((m) => m.equals(req.user.userId))) {
+      return res.status(403).json({ message: 'Du bist kein Mitglied dieses Haushalts' });
+    }
+
+    household.note = req.body.note || '';
+    const updatedHousehold = await household.save();
+
+    // Live-Event: Notiz wurde aktualisiert
+    req.io.to(`household_${household._id}`).emit('household:noteUpdated', {
+      householdId: household._id,
+      note: updatedHousehold.note,
+    });
+
+    res.json(updatedHousehold);
+  } catch (error) {
+    sendClientError(res, error);
+  }
+});
+
 // DELETE /api/households/:id → Haushalt löschen (nur Owner)
 router.delete('/:id', async (req, res) => {
   try {

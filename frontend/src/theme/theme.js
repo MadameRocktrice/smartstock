@@ -9,9 +9,12 @@ export const theme = {
     primary: '#008471',
     secondary: '#AAA600',
     signal: '#C45F3F',
-    primaryLight: '#E0F2EE',
-    secondaryLight: '#F5F2D9',
-    signalLight: '#F5DDD4'
+    primaryLight: '#d2eee8ff',
+    secondaryLight: '#f1edccff',
+    signalLight: '#F5DDD4',
+    primaryDark: '#055c4fff',
+    secondaryDark: '#716f04ff',
+    signalDark: '#913f26ff',
   },
   fonts: {
     heading: "'Fraunces', serif",

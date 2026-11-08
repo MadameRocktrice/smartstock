@@ -38,6 +38,10 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify({ name }),
   }),
+  updateHouseholdNote: (id, note) => apiRequest(`/households/${id}/note`, {
+    method: 'PUT',
+    body: JSON.stringify({ note }),
+  }),
   deleteHousehold: (id) => apiRequest(`/households/${id}`, {
     method: 'DELETE',
   }),

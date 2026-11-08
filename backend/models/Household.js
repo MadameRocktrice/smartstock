@@ -14,7 +14,11 @@ const householdSchema = new mongoose.Schema({
   members: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }]
+  }],
+  note: {
+    type: String,
+    default: ''
+  }
 }, {
   timestamps: true
 });

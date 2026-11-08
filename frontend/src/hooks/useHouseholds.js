@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '../api/api';
 import { useAuth } from './useAuth';
+import { useSocket } from './useSocket';
 
 export function useHouseholds() {
   const { isAuthenticated } = useAuth();
@@ -33,6 +34,24 @@ export function useHouseholds() {
   useEffect(() => {
     loadHouseholds();
   }, [loadHouseholds]);
+
+  // Live-Update bei Notiz-Änderung
+const socket = useSocket();
+
+useEffect(() => {
+  if (!socket) return;
+
+  const handleNoteUpdate = () => {
+    console.log('📡 Notiz-Event empfangen → neu laden');
+    loadHouseholds();
+  };
+
+  socket.on('household:noteUpdated', handleNoteUpdate);
+
+  return () => {
+    socket.off('household:noteUpdated', handleNoteUpdate);
+  };
+}, [socket, loadHouseholds]);
 
   // Aktiver Haushalt = letzter in der Liste (chronologisch beigetreten)
   const activeHousehold = households.length > 0
