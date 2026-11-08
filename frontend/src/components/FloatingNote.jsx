@@ -7,6 +7,8 @@ import { theme } from '../theme/theme';
 import saveIcon from '../assets/icons/save.svg';
 import deleteIcon from '../assets/icons/delete.svg';
 
+// --- Styled Components ---
+
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -58,11 +60,19 @@ const Grip = styled.div`
 `;
 
 const ExpandedContent = styled.div`
-  display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
   flex-direction: column;
-  padding: 24px 24px 120px 24px;
-  height: 100%;
+  padding: 0 24px 120px 24px;
   gap: ${theme.spacing.md};
+  opacity: ${(props) => (props.$isOpen ? 1 : 0)};
+  pointer-events: ${(props) => (props.$isOpen ? 'auto' : 'none')};
+  transition: opacity 0.25s ease;
+  transition-delay: ${(props) => (props.$isOpen ? '0.25s' : '0s')};
 `;
 
 const Header = styled.div`
@@ -149,9 +159,8 @@ const IconButton = styled.button`
 `;
 
 const DeleteIconButton = styled(IconButton)`
-background: ${theme.colors.signal};  
-img {
-  }
+  background: ${theme.colors.signal};
+
   &:hover {
     background: ${theme.colors.signalDark};
   }
@@ -162,34 +171,37 @@ img {
 function FloatingNote() {
   const location = useLocation();
   const { activeHousehold, reload } = useHouseholds();
+
+  // Alle Hooks GANZ oben
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  const [touchStartY, setTouchStartY] = useState(null);
   const textareaRef = useRef(null);
 
-  // Wenn Haushalt oder Notiz sich ändert, Draft syncen (nur wenn geschlossen)
+  // Draft syncen wenn die Notiz von aussen ändert (z.B. via Socket)
   useEffect(() => {
     if (!isOpen) {
       setDraft(activeHousehold?.note || '');
     }
   }, [activeHousehold?.note, isOpen]);
 
-  // Nicht anzeigen auf Login/Register
+  // Early returns NACH allen Hooks
   if (location.pathname === '/login' || location.pathname === '/register') {
     return null;
   }
 
-  // Noch kein Haushalt → nicht anzeigen
   if (!activeHousehold) {
     return null;
   }
 
+  // Abgeleitete Werte
   const hasNote = Boolean(activeHousehold.note && activeHousehold.note.trim());
 
+  // Handler
   const handleOpen = () => {
     setDraft(activeHousehold.note || '');
     setIsOpen(true);
-    // Textarea nach Animation fokussieren
     setTimeout(() => textareaRef.current?.focus(), 450);
   };
 
@@ -224,6 +236,26 @@ function FloatingNote() {
     }
   };
 
+  // Touch-Handler für Swipe
+  const handleTouchStart = (e) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartY === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diff = touchStartY - touchEndY;
+
+    if (diff > 50 && !isOpen) {
+      handleOpen();
+    }
+    if (diff < -50 && isOpen) {
+      handleClose();
+    }
+
+    setTouchStartY(null);
+  };
+
   return (
     <>
       <Overlay $isOpen={isOpen} onClick={handleClose} />
@@ -231,6 +263,8 @@ function FloatingNote() {
         $isOpen={isOpen}
         $hasNote={hasNote}
         onClick={isOpen ? undefined : handleOpen}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <CollapsedHandle $isOpen={isOpen}>
           <Grip />
@@ -253,15 +287,15 @@ function FloatingNote() {
           />
 
           <ButtonRow>
-  {hasNote && (
-    <DeleteIconButton onClick={handleClear} disabled={saving} aria-label="Loeschen">
-      <img src={deleteIcon} alt="Loeschen" />
-    </DeleteIconButton>
-  )}
-  <IconButton onClick={handleSave} disabled={saving} aria-label="Speichern">
-    <img src={saveIcon} alt="Speichern" />
-  </IconButton>
-</ButtonRow>
+            {hasNote && (
+              <DeleteIconButton onClick={handleClear} disabled={saving} aria-label="Loeschen">
+                <img src={deleteIcon} alt="Loeschen" />
+              </DeleteIconButton>
+            )}
+            <IconButton onClick={handleSave} disabled={saving} aria-label="Speichern">
+              <img src={saveIcon} alt="Speichern" />
+            </IconButton>
+          </ButtonRow>
         </ExpandedContent>
       </NoteWrapper>
     </>
