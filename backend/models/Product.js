@@ -15,8 +15,8 @@ const productSchema = new mongoose.Schema({
   },
   minAmount: {
     type: Number,
-    default: 1,
-    min: 0
+    min: 0,
+    default: null,
   },
   unit: {
     type: String,
@@ -45,15 +45,16 @@ const productSchema = new mongoose.Schema({
 
 // Auto-Logik: Wenn currentAmount unter minAmount, Eintrag auf Einkaufsliste
 productSchema.post('save', async function(doc) {
-  if (doc.currentAmount < doc.minAmount) {
+  // Nur Auto-Logik wenn Minimum gesetzt UND darunter
+  if (doc.minAmount != null && doc.currentAmount < doc.minAmount) {
     const existingItem = await ShoppingListItem.findOne({
       product: doc._id,
       isBought: false
     });
-    
+
     if (!existingItem) {
       const missingAmount = doc.minAmount - doc.currentAmount;
-      
+
       await ShoppingListItem.create({
         name: doc.name,
         quantity: missingAmount > 0 ? missingAmount : 1,

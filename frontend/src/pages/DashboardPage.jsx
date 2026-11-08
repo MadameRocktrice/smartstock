@@ -374,9 +374,14 @@ function DashboardPage() {
     );
   };
 
-  const lowStockProducts = products.filter(
-    (p) => p.currentAmount <= p.minAmount
-  );
+  const lowStockProducts = products.filter((p) => {
+    // Produkte ohne Minimum: zeigen wenn currentAmount <= 1
+    if (p.minAmount == null) {
+      return p.currentAmount > 0 && p.currentAmount <= 1;
+    }
+    // Produkte mit Minimum: nicht zeigen (sind auf Einkaufsliste)
+    return false;
+  });
   const lowStockCount = lowStockProducts.length;
   
   const expiringProducts = products.filter((p) => {
@@ -598,12 +603,14 @@ function DashboardPage() {
             {lowStockProducts.slice(0, 3).map((product) => (
               <ListItem key={product._id}>
                 <ItemName>{product.name}</ItemName>
+                {product.minAmount != null && (
                 <ItemBadge 
                   $bgColor={theme.colors.secondaryLight} 
                   $color={theme.colors.secondary}
                 >
                   {product.currentAmount}/{product.minAmount}
                 </ItemBadge>
+              )}
                 <CartButton aria-label="Auf Einkaufsliste"
                   onClick={() => handleAddToShopping(product)}
                   disabled={isOnShoppingList(product._id)}

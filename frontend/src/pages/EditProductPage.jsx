@@ -180,7 +180,10 @@ function EditProductPage() {
     validationSchema: Yup.object({
       name: Yup.string().min(2).max(50).required('Pflichtfeld'),
       currentAmount: Yup.number().min(0).required('Pflichtfeld'),
-      minAmount: Yup.number().min(0).required('Pflichtfeld'),
+      minAmount: Yup.number()
+      .min(0, 'Darf nicht negativ sein')
+      .nullable()
+      .transform((value, originalValue) => originalValue === '' ? null : value),
       unit: Yup.string().required('Pflichtfeld'),
       category: Yup.string().required('Bitte wählen'),
       location: Yup.string().required('Bitte wählen'),
@@ -317,7 +320,7 @@ function EditProductPage() {
           </Field>
 
           <Field>
-            <Label htmlFor="minAmount">Minimum</Label>
+            <Label htmlFor="minAmount">Minimum (optional)</Label>
             <Input
               id="minAmount"
               type="number"

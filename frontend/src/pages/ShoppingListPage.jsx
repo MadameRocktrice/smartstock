@@ -284,7 +284,7 @@ const filteredItems = items.filter((item) => {
                     <ItemName $bought={item.isBought}>
                       {productName}
                     </ItemName>
-                    {item.product && (
+                    {item.product && item.product.minAmount != null && (
                       <Ratio
                         $bgColor={ratioColors.bg}
                         $color={ratioColors.color}

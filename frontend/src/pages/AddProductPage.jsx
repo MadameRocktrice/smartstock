@@ -169,7 +169,8 @@ function AddProductPage() {
         .required('Pflichtfeld'),
       minAmount: Yup.number()
         .min(0, 'Darf nicht negativ sein')
-        .required('Pflichtfeld'),
+        .nullable()
+        .transform((value, originalValue) => originalValue === '' ? null : value),
       unit: Yup.string()
         .required('Pflichtfeld'),
       category: Yup.string()
@@ -311,7 +312,7 @@ function AddProductPage() {
           </Field>
           
           <Field>
-            <Label htmlFor="minAmount">Minimum</Label>
+            <Label htmlFor="minAmount">Minimum (optional)</Label>
             <Input
               id="minAmount"
               type="number"
