@@ -61,7 +61,7 @@ const Grip = styled.div`
 
 const ExpandedContent = styled.div`
   position: absolute;
-  top: 36px;
+  top: 20px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -94,7 +94,7 @@ const CloseButton = styled.button`
   font-size: 24px;
   cursor: pointer;
   color: ${theme.colors.textPrimary};
-  padding: 4px 12px;
+  padding: 4px 0px;
   line-height: 1;
   opacity: 0.5;
 
