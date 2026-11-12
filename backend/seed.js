@@ -95,56 +95,56 @@ async function seed() {
   // 7. Produkte anlegen
   console.log('📦 Erstelle Produkte...');
   const products = [
-  // --- MIT Minimum (klassischer Fall) ---
-  
-  // Milchprodukte
-  { name: 'Milch', currentAmount: 5, minAmount: 2, unit: 'Liter',countStep: 1, category: 'Milchprodukte', location: 'Kühlschrank' },
-  { name: 'Butter', currentAmount: 1, minAmount: 1, unit: 'Stück', category: 'Milchprodukte', location: 'Kühlschrank' },
-  { name: 'Joghurt', currentAmount: 6, minAmount: 3, unit: 'Stück', category: 'Milchprodukte', location: 'Kühlschrank' },
-  { name: 'Quark', currentAmount: 0, minAmount: 1, unit: 'Stück', category: 'Milchprodukte', location: 'Kühlschrank' },
-  
-  // Milchprodukte mit Ablaufdatum
-  { 
-    name: 'Camembert', currentAmount: 1, minAmount: 1, unit: 'Stück', 
-    category: 'Milchprodukte', location: 'Kühlschrank',
-    expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)  // 2 Tage → rot
-  },
-  { 
-    name: 'Mozzarella', currentAmount: 2, minAmount: 1, unit: 'Stück',
-    category: 'Milchprodukte', location: 'Kühlschrank',
-    expiryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)  // 5 Tage → gelb
-  },
+    // --- MIT Minimum (klassischer Fall) ---
 
-  // Backwaren
-  { name: 'Brot', currentAmount: 1, minAmount: 2, unit: 'Stück', category: 'Backwaren', location: 'Küche' },
-  { name: 'Brötchen', currentAmount: 6, minAmount: 4, unit: 'Stück', category: 'Backwaren', location: 'Küche' },
-  { name: 'Mehl', currentAmount: 1000, minAmount: 500, unit: 'Gramm', countStep: 100, category: 'Backwaren', location: 'Vorratsschrank' },
+    // Milchprodukte
+    { name: 'Milch', currentAmount: 5, minAmount: 2, unit: 'Flasche', category: 'Milchprodukte', location: 'Kühlschrank' },
+    { name: 'Butter', currentAmount: 1, minAmount: 1, unit: 'Stück', category: 'Milchprodukte', location: 'Kühlschrank' },
+    { name: 'Joghurt', currentAmount: 6, minAmount: 3, unit: 'Stück', category: 'Milchprodukte', location: 'Kühlschrank' },
+    { name: 'Quark', currentAmount: 0, minAmount: 1, unit: 'Stück', category: 'Milchprodukte', location: 'Kühlschrank' },
 
-  // Obst & Gemüse
-  { name: 'Äpfel', currentAmount: 8, minAmount: 5, unit: 'Stück', category: 'Obst & Gemüse', location: 'Küche' },
-  { name: 'Karotten', currentAmount: 0, minAmount: 5, unit: 'Stück', category: 'Obst & Gemüse', location: 'Kühlschrank' },
+    // Milchprodukte mit Ablaufdatum
+    {
+      name: 'Camembert', currentAmount: 1, minAmount: 1, unit: 'Stück',
+      category: 'Milchprodukte', location: 'Kühlschrank',
+      expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)  // 2 Tage → rot
+    },
+    {
+      name: 'Mozzarella', currentAmount: 2, minAmount: 1, unit: 'Stück',
+      category: 'Milchprodukte', location: 'Kühlschrank',
+      expiryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)  // 5 Tage → gelb
+    },
 
-  // Tiefkühl
-  { name: 'Tiefkühlpizza', currentAmount: 2, minAmount: 1, unit: 'Stück', category: 'Tiefkühlprodukte', location: 'Tiefkühler' },
+    // Backwaren
+    { name: 'Brot', currentAmount: 1, minAmount: 2, unit: 'Stück', category: 'Backwaren', location: 'Küche' },
+    { name: 'Brötchen', currentAmount: 6, minAmount: 4, unit: 'Stück', category: 'Backwaren', location: 'Küche' },
+    { name: 'Mehl', currentAmount: 2, minAmount: 1, unit: 'Packung', category: 'Backwaren', location: 'Vorratsschrank' },
 
-  // --- OHNE Minimum (bewusster Umgang) ---
-  
-  // Haushalt-Items wo Minimum keinen Sinn macht
-  { name: 'Senf', currentAmount: 2, unit: 'Flasche', category: 'Sonstiges', location: 'Kühlschrank' },
-  { name: 'Apfelmus', currentAmount: 1, unit: 'Glas', category: 'Sonstiges', location: 'Vorratsschrank' },
-  { name: 'Spülmittel', currentAmount: 1, unit: 'Flasche', category: 'Haushalt', location: 'Küche' },
-  
-  // Ohne Minimum + mit Ablaufdatum
-  { 
-    name: 'Salami', currentAmount: 1, unit: 'Packung',
-    category: 'Sonstiges', location: 'Kühlschrank',
-    expiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)  // 1 Tag → rot
-  },
+    // Obst & Gemüse
+    { name: 'Äpfel', currentAmount: 8, minAmount: 5, unit: 'Stück', category: 'Obst & Gemüse', location: 'Küche' },
+    { name: 'Karotten', currentAmount: 0, minAmount: 5, unit: 'Stück', category: 'Obst & Gemüse', location: 'Kühlschrank' },
 
-  // Getränke (mit Min)
-  { name: 'Wasser', currentAmount: 6, minAmount: 6, unit: 'Flaschen', category: 'Getränke', location: 'Vorratsschrank' },
-  { name: 'Orangensaft', currentAmount: 2, minAmount: 1, unit: 'Liter', countStep: 1,category: 'Getränke', location: 'Kühlschrank' },
-];
+    // Tiefkühl
+    { name: 'Tiefkühlpizza', currentAmount: 2, minAmount: 1, unit: 'Stück', category: 'Tiefkühlprodukte', location: 'Tiefkühler' },
+
+    // --- OHNE Minimum (bewusster Umgang) ---
+
+    // Haushalt-Items wo Minimum keinen Sinn macht
+    { name: 'Senf', currentAmount: 2, unit: 'Flasche', category: 'Sonstiges', location: 'Kühlschrank' },
+    { name: 'Apfelmus', currentAmount: 1, unit: 'Glas', category: 'Sonstiges', location: 'Vorratsschrank' },
+    { name: 'Spülmittel', currentAmount: 1, unit: 'Flasche', category: 'Haushalt', location: 'Küche' },
+
+    // Ohne Minimum + mit Ablaufdatum
+    {
+      name: 'Salami', currentAmount: 1, unit: 'Packung',
+      category: 'Sonstiges', location: 'Kühlschrank',
+      expiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)  // 1 Tag → rot
+    },
+
+    // Getränke (mit Min)
+    { name: 'Wasser', currentAmount: 6, minAmount: 6, unit: 'Flasche', category: 'Getränke', location: 'Vorratsschrank' },
+    { name: 'Orangensaft', currentAmount: 2, minAmount: 1, unit: 'Flasche', category: 'Getränke', location: 'Kühlschrank' },
+  ];
 
   for (const p of products) {
     await Product.create({
@@ -152,7 +152,6 @@ async function seed() {
       currentAmount: p.currentAmount,
       minAmount: p.minAmount,
       unit: p.unit,
-      countStep: p.countStep,
       category: categories[p.category],
       location: locations[p.location],
       household: household._id,
