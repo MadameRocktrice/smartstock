@@ -6,8 +6,7 @@ import { useFormData } from '../hooks/useFormData';
 import { theme } from '../theme/theme';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds } from '../hooks/useHouseholds';
-import { ALL_UNITS, VARIABLE_UNITS, STEP_OPTIONS, shortUnit } from '../utils/units';
-//                                               ^^^^^^^^^^^^
+import { ALL_UNITS } from '../utils/units';
 
 const PageContainer = styled.div`
   padding: ${theme.spacing.lg};
@@ -171,7 +170,6 @@ function AddProductPage() {
       currentAmount: '',
       minAmount: '',
       unit: '',
-      countStep: 1,
       expiryDate: '',
       category: '',
       location: '',
@@ -303,22 +301,6 @@ function AddProductPage() {
           )}
         </Field>
 
-        {VARIABLE_UNITS.includes(formik.values.unit) && (
-        <Field>
-          <Label htmlFor="countStep">Zähler-Schritt</Label>
-          <Select
-            id="countStep"
-            {...formik.getFieldProps('countStep')}
-          >
-            {(STEP_OPTIONS[formik.values.unit] || [1]).map((step) => (
-              <option key={step} value={step}>
-                {step} {shortUnit(formik.values.unit)}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      )}
-        
         <Row>
           <Field>
             <Label htmlFor="currentAmount">Aktuell</Label>

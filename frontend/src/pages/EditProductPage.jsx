@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import styled from 'styled-components';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
+import { ALL_UNITS } from '../utils/units';
 
 const PageContainer = styled.div`
   padding: ${theme.spacing.lg};
@@ -49,7 +50,16 @@ const Input = styled.input`
   font-family: ${theme.fonts.body};
   background-color: ${theme.colors.cardBackground};
   color: ${theme.colors.textPrimary};
+  width: 100%;
+  box-sizing: border-box;
+  appearance: textfield;
   box-shadow: ${(props) => (props.$hasError ? `0 0 0 2px ${theme.colors.signal}` : 'none')};
+  
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
   
   &::placeholder {
     color: ${theme.colors.textSecondary};
@@ -146,22 +156,22 @@ function EditProductPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [productLoading, setProductLoading] = useState(true);
-  const { categories, locations, households, loading: formDataLoading } = useFormData();
+  const { categories, locations, loading: formDataLoading } = useFormData();
   const loading = productLoading || formDataLoading;
 
   useEffect(() => {
     async function loadProduct() {
       try {
         const productData = await api.getProduct(id);
-      setProduct(productData);
-    } catch (err) {
-      console.error('Fehler beim Laden:', err);
-    } finally {
-      setProductLoading(false);
+        setProduct(productData);
+      } catch (err) {
+        console.error('Fehler beim Laden:', err);
+      } finally {
+        setProductLoading(false);
+      }
     }
-  }
-  loadProduct();
-}, [id]);
+    loadProduct();
+  }, [id]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -175,25 +185,24 @@ function EditProductPage() {
         : '',
       category: product?.category?._id || product?.category || '',
       location: product?.location?._id || product?.location || '',
-      household: product?.household?._id || product?.household || '',
     },
     validationSchema: Yup.object({
-      name: Yup.string().min(2).max(50).required('Pflichtfeld'),
-      currentAmount: Yup.number().min(0).required('Pflichtfeld'),
-      minAmount: Yup.number()
-      .min(0, 'Darf nicht negativ sein')
-      .nullable()
-      .transform((value, originalValue) => originalValue === '' ? null : value),
+      name: Yup.string().min(2, 'Name zu kurz').max(50, 'Name zu lang').required('Pflichtfeld'),
+      currentAmount: Yup.number().min(0, 'Darf nicht negativ sein').required('Pflichtfeld'),
+      minAmount: Yup.number().min(0, 'Darf nicht negativ sein').nullable(),
       unit: Yup.string().required('Pflichtfeld'),
-      category: Yup.string().required('Bitte wählen'),
-      location: Yup.string().required('Bitte wählen'),
-      household: Yup.string().required('Bitte wählen'),
+      category: Yup.string().required('Bitte Kategorie wählen'),
+      location: Yup.string().required('Bitte Standort wählen'),
     }),
     onSubmit: async (values, { setStatus }) => {
       try {
         const dataToSend = { ...values };
         if (!dataToSend.expiryDate) {
           delete dataToSend.expiryDate;
+        }
+        // Leeres minAmount als null senden (optional)
+        if (dataToSend.minAmount === '' || dataToSend.minAmount == null) {
+          dataToSend.minAmount = null;
         }
         await api.updateProduct(id, dataToSend);
         navigate('/products');
@@ -242,23 +251,6 @@ function EditProductPage() {
         </Field>
 
         <Field>
-          <Label htmlFor="household">Haushalt</Label>
-          <Select
-            id="household"
-            $hasError={formik.touched.household && formik.errors.household}
-            {...formik.getFieldProps('household')}
-          >
-            <option value="">Bitte wählen...</option>
-            {households.map((hh) => (
-              <option key={hh._id} value={hh._id}>{hh.name}</option>
-            ))}
-          </Select>
-          {formik.touched.household && formik.errors.household && (
-            <ErrorText>{formik.errors.household}</ErrorText>
-          )}
-        </Field>
-
-        <Field>
           <Label htmlFor="category">Kategorie</Label>
           <Select
             id="category"
@@ -297,9 +289,16 @@ function EditProductPage() {
           <Input
             id="unit"
             type="text"
+            list="units-list"
+            placeholder="z.B. Liter, Stück, Kilogramm"
             $hasError={formik.touched.unit && formik.errors.unit}
             {...formik.getFieldProps('unit')}
           />
+          <datalist id="units-list">
+            {ALL_UNITS.map((u) => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
           {formik.touched.unit && formik.errors.unit && (
             <ErrorText>{formik.errors.unit}</ErrorText>
           )}

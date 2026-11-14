@@ -5,6 +5,7 @@ import { api } from '../api/api';
 import { theme } from '../theme/theme';
 import searchIcon from '../assets/icons/search.svg';
 import filterIcon from '../assets/icons/filter.svg';
+import { shortUnit } from '../utils/units';
 
 const Container = styled.div`
   padding: ${theme.spacing.lg};
@@ -278,9 +279,9 @@ const filteredItems = items.filter((item) => {
                 const productName = item.product?.name || item.name;
                 return (
                   <Item key={item._id} $bought={item.isBought}>
-                    <ItemAmount>
-                      {item.quantity} {item.unit || 'Stk.'}
-                    </ItemAmount>
+                      <ItemAmount>
+                        {item.quantity} {item.unit || 'Stk.'}
+                      </ItemAmount>
                     <ItemName $bought={item.isBought}>
                       {productName}
                     </ItemName>
@@ -289,7 +290,7 @@ const filteredItems = items.filter((item) => {
                         $bgColor={ratioColors.bg}
                         $color={ratioColors.color}
                       >
-                        {item.product.currentAmount}/{item.product.minAmount}
+                        {item.product.currentAmount}/{item.product.minAmount} {shortUnit(item.product.unit)}
                       </Ratio>
                     )}
                     <Checkbox

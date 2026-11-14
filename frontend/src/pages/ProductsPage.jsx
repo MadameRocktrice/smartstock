@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
 import { useProducts } from '../hooks/useProducts';
-import { shortUnit, formatAmount } from '../utils/units';
+import { shortUnit } from '../utils/units';
 import searchIcon from '../assets/icons/search.svg';
 import filterIcon from '../assets/icons/filter.svg';
 import moreIcon from '../assets/icons/more.svg';
@@ -113,10 +113,34 @@ const Tab = styled.button`
   `}
 `;
 
-const SortDropdown = styled.div`
+const SortWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textPrimary};
+`;
+
+const SortLabel = styled.span`
+  color: ${theme.colors.textSecondary};
+`;
+
+const SortSelect = styled.select`
+  background: transparent;
+  border: none;
+  font-family: ${theme.fonts.body};
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.textPrimary};
   cursor: pointer;
+  appearance: none;
+  padding-right: 16px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%231F2D24' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 const LocationGroup = styled.div`
@@ -267,6 +291,7 @@ function ProductsPage() {
   const initialTab = searchParams.get('tab') || 'alle';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('location');
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
@@ -307,15 +332,48 @@ function ProductsPage() {
     return true;
   });
 
-    // Gruppieren nach Standort
-  const groupedByLocation = filteredProducts.reduce((groups, product) => {
-    const locationName = product.location?.name || 'Ohne Standort';
-    if (!groups[locationName]) {
-      groups[locationName] = [];
+  // Sortieren nach gewählter Sortierung
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case 'name-asc':
+        return a.name.localeCompare(b.name, 'de');
+
+      case 'scarcity': {
+        // Knappste zuerst. Produkte ohne Minimum landen am Ende.
+        const ratioA = a.minAmount != null && a.minAmount > 0
+          ? a.currentAmount / a.minAmount
+          : Infinity;
+        const ratioB = b.minAmount != null && b.minAmount > 0
+          ? b.currentAmount / b.minAmount
+          : Infinity;
+        return ratioA - ratioB;
+      }
+
+      case 'expiry':
+        // Bald ablaufende zuerst. Produkte ohne Ablaufdatum landen am Ende.
+        if (!a.expiryDate && !b.expiryDate) return 0;
+        if (!a.expiryDate) return 1;
+        if (!b.expiryDate) return -1;
+        return new Date(a.expiryDate) - new Date(b.expiryDate);
+
+      case 'location':
+      default:
+        // Innerhalb der Standort-Gruppen alphabetisch
+        return a.name.localeCompare(b.name, 'de');
     }
-    groups[locationName].push(product);
-    return groups;
-  }, {});
+  });
+
+  // Nur bei Sortierung "Standort" gruppieren, sonst flache Liste
+  const groupedByLocation = sortBy === 'location'
+    ? sortedProducts.reduce((groups, product) => {
+        const locationName = product.location?.name || 'Ohne Standort';
+        if (!groups[locationName]) {
+          groups[locationName] = [];
+        }
+        groups[locationName].push(product);
+        return groups;
+      }, {})
+    : null;
 
   // Ampelfarbe je nach Bestand bestimmen
   const getAmountColors = (product) => {
@@ -337,19 +395,17 @@ function ProductsPage() {
     };
   };
 
- // Menge anpassen – nutzt product.countStep (oder 1 als Fallback)
-const changeAmount = async (product, direction) => {
-  const step = product.countStep || 1;
-  const newAmountRaw = Math.max(0, product.currentAmount + (direction * step));
-  // Auf 2 Dezimalstellen runden, damit 0.1 + 0.2 nicht 0.30000... wird
-  const newAmount = Math.round(newAmountRaw * 100) / 100;
-  try {
-    await api.updateProduct(product._id, { currentAmount: newAmount });
-    reload();
-  } catch (err) {
-    console.error('Fehler beim Aktualisieren:', err);
-  }
-};
+  // Menge anpassen (+1 / -1)
+  const changeAmount = async (product, delta) => {
+    const current = Number(product.currentAmount) || 0;
+    const newAmount = Math.max(0, current + delta);
+    try {
+      await api.updateProduct(product._id, { currentAmount: newAmount });
+      reload();
+    } catch (err) {
+      console.error('Fehler beim Aktualisieren:', err);
+    }
+  };
 
   const handleEdit = (productId) => {
     setOpenMenuId(null);
@@ -362,7 +418,7 @@ const changeAmount = async (product, direction) => {
       `Möchtest du "${product.name}" wirklich löschen?`
     );
     if (!confirmed) return;
-    
+
     try {
       await api.deleteProduct(product._id);
       reload();
@@ -370,6 +426,59 @@ const changeAmount = async (product, direction) => {
       console.error('Fehler beim Löschen:', err);
       alert('Produkt konnte nicht gelöscht werden');
     }
+  };
+
+  // Ein einzelnes Produkt-Item rendern (wird bei beiden Ansichten genutzt)
+  const renderProductItem = (product) => {
+    const colors = getAmountColors(product);
+    return (
+      <ProductItem key={product._id}>
+        <ProductName>{product.name}</ProductName>
+        <AmountPill $bgColor={colors.bg}>
+          <AmountButton
+            $color={colors.color}
+            onClick={() => changeAmount(product, -1)}
+            disabled={product.currentAmount === 0}
+          >
+            −
+          </AmountButton>
+          <AmountValue $color={colors.color}>
+            {product.currentAmount} {shortUnit(product.unit)}
+          </AmountValue>
+          <AmountButton
+            $color={colors.color}
+            onClick={() => changeAmount(product, 1)}
+          >
+            +
+          </AmountButton>
+        </AmountPill>
+        <MenuWrapper ref={openMenuId === product._id ? menuRef : null}>
+          <MoreButton
+            onClick={() =>
+              setOpenMenuId(openMenuId === product._id ? null : product._id)
+            }
+            aria-label="Mehr Optionen"
+          >
+            <img src={moreIcon} alt="" />
+          </MoreButton>
+          {openMenuId === product._id && (
+            <Menu>
+              <MenuItem onClick={() => handleEdit(product._id)}>
+                <img src={editIcon} alt="" />
+                Bearbeiten
+              </MenuItem>
+              <MenuItem
+                $variant="danger"
+                onClick={() => handleDelete(product)}
+              >
+                <img src={deleteIcon} alt="" />
+                Löschen
+              </MenuItem>
+            </Menu>
+          )}
+        </MenuWrapper>
+      </ProductItem>
+    );
   };
 
   return (
@@ -408,72 +517,39 @@ const changeAmount = async (product, direction) => {
             Ablaufend
           </Tab>
         </Tabs>
-        <SortDropdown>Sortierung: Name A–Z ⌄</SortDropdown>
+        <SortWrapper>
+          <SortLabel>Sortierung:</SortLabel>
+          <SortSelect
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="location">Standort</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="scarcity">Knappheit</option>
+            <option value="expiry">Läuft bald ab</option>
+          </SortSelect>
+        </SortWrapper>
       </TabsRow>
 
       {loading ? (
         <EmptyState>Lade Produkte...</EmptyState>
-      ) : filteredProducts.length === 0 ? (
+      ) : sortedProducts.length === 0 ? (
         <EmptyState>Keine Produkte vorhanden</EmptyState>
-      ) : (
+      ) : groupedByLocation ? (
+        // Gruppiert nach Standort
         Object.entries(groupedByLocation).map(([locationName, items]) => (
           <LocationGroup key={locationName}>
             <LocationTitle>{locationName}</LocationTitle>
             <ProductList>
-              {items.map((product) => {
-                const colors = getAmountColors(product);
-                return (
-                  <ProductItem key={product._id}>
-                    <ProductName>{product.name}</ProductName>
-                    <AmountPill $bgColor={colors.bg}>
-                    <AmountButton 
-                      $color={colors.color}
-                      onClick={() => changeAmount(product, -1)}
-                      disabled={product.currentAmount === 0}
-                    >
-                      −
-                    </AmountButton>
-                    <AmountValue $color={colors.color}>
-                      {formatAmount(product.currentAmount)} {shortUnit(product.unit)}
-                    </AmountValue>
-                    <AmountButton 
-                      $color={colors.color}
-                      onClick={() => changeAmount(product, 1)}
-                    >
-                      +
-                    </AmountButton>
-                  </AmountPill>
-                    <MenuWrapper ref={openMenuId === product._id ? menuRef : null}>
-                      <MoreButton
-                        onClick={() =>
-                          setOpenMenuId(openMenuId === product._id ? null : product._id)
-                        }
-                        aria-label="Mehr Optionen"
-                      >
-                        <img src={moreIcon} alt="" />
-                      </MoreButton>
-                      {openMenuId === product._id && (
-                        <Menu>
-                          <MenuItem onClick={() => handleEdit(product._id)}>
-                            <img src={editIcon} alt="" />
-                            Bearbeiten
-                          </MenuItem>
-                          <MenuItem
-                            $variant="danger"
-                            onClick={() => handleDelete(product)}
-                          >
-                            <img src={deleteIcon} alt="" />
-                            Löschen
-                          </MenuItem>
-                        </Menu>
-                      )}
-                    </MenuWrapper>
-                  </ProductItem>
-                );
-              })}
+              {items.map((product) => renderProductItem(product))}
             </ProductList>
           </LocationGroup>
         ))
+      ) : (
+        // Flache Liste (Name A–Z, Knappheit, Läuft bald ab)
+        <ProductList>
+          {sortedProducts.map((product) => renderProductItem(product))}
+        </ProductList>
       )}
     </Container>
   );
