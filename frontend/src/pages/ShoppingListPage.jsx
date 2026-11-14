@@ -194,7 +194,7 @@ const EmptyState = styled.div`
 `;
 
 function ShoppingListPage() {
-  const { items, loading, reload } = useShoppingList();
+  const { items, loading, reload, updateLocal } = useShoppingList();
   const [activeTab, setActiveTab] = useState('alle');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('category');
@@ -248,11 +248,14 @@ function ShoppingListPage() {
   };
 
   const toggleItem = async (item) => {
+    const newBought = !item.isBought;
+    // UI sofort aktualisieren (Haken erscheint/verschwindet)
+    updateLocal(item._id, { isBought: newBought });
     try {
-      await api.updateShoppingItem(item._id, { isBought: !item.isBought });
-      reload();
+      await api.updateShoppingItem(item._id, { isBought: newBought });
     } catch (err) {
       console.error('Fehler beim Abhaken:', err);
+      reload();
     }
   };
 

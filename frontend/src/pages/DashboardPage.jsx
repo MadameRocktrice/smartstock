@@ -348,20 +348,22 @@ const EmptyText = styled.p`
 `;
 
 function DashboardPage() {
-  const { products, loading: productsLoading, reload: reloadProducts } = useProducts();
-  const { items: shoppingList, loading: shoppingLoading, reload: reloadShopping } = useShoppingList();
+  const { products, loading: productsLoading, reload: reloadProducts, updateLocal: updateProductLocal } = useProducts();
+  const { items: shoppingList, loading: shoppingLoading, reload: reloadShopping, updateLocal: updateShoppingLocal } = useShoppingList();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const loading = productsLoading || shoppingLoading;
 
   async function handleReduceAmount(product) {
+    const current = Number(product.currentAmount) || 0;
+    const newAmount = Math.max(0, current - 1);
+    // UI sofort aktualisieren (optimistisch)
+    updateProductLocal(product._id, { currentAmount: newAmount });
     try {
-      const current = Number(product.currentAmount) || 0;
-      const newAmount = Math.max(0, current - 1);
       await api.updateProduct(product._id, { currentAmount: newAmount });
-      reloadProducts();
     } catch (err) {
       console.error('Fehler beim Reduzieren:', err);
+      reloadProducts();
     }
   }
 
@@ -433,15 +435,17 @@ function DashboardPage() {
     });
 
 
-    async function handleToggleShopping(item) {
-  try {
-    await api.updateShoppingItem(item._id, { isBought: !item.isBought });
-    // Kurz warten, damit User den Haken sieht
-    setTimeout(() => reloadShopping(), 500);
-  } catch (err) {
-    console.error('Fehler beim Abhaken:', err);
+  async function handleToggleShopping(item) {
+    const newBought = !item.isBought;
+    // UI sofort aktualisieren (Haken erscheint/verschwindet)
+    updateShoppingLocal(item._id, { isBought: newBought });
+    try {
+      await api.updateShoppingItem(item._id, { isBought: newBought });
+    } catch (err) {
+      console.error('Fehler beim Abhaken:', err);
+      reloadShopping();
+    }
   }
-}
 
   async function handleAddToShopping(product) {
     try {

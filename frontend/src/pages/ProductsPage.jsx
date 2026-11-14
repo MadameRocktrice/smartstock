@@ -269,7 +269,7 @@ const EmptyState = styled.div`
 
 
 function ProductsPage() {
-  const { products, loading, reload } = useProducts();
+  const { products, loading, reload, updateLocal } = useProducts();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'alle';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -373,15 +373,19 @@ function ProductsPage() {
     };
   };
 
-  // Menge anpassen (+1 / -1)
+  // Menge anpassen (+1 / -1) - Optimistic Update, kein Scroll-Reset
   const changeAmount = async (product, delta) => {
     const current = Number(product.currentAmount) || 0;
     const newAmount = Math.max(0, current + delta);
+    // UI sofort aktualisieren (optimistisch)
+    updateLocal(product._id, { currentAmount: newAmount });
     try {
       await api.updateProduct(product._id, { currentAmount: newAmount });
-      reload();
+      // Kein reload noetig - State ist schon korrekt
     } catch (err) {
       console.error('Fehler beim Aktualisieren:', err);
+      // Bei Fehler: Vollstaendig neu laden, damit Daten wieder stimmen
+      reload();
     }
   };
 
@@ -487,9 +491,12 @@ function ProductsPage() {
           >
             Knapp
           </Tab>
-          <Tab 
-            $active={activeTab === 'ablaufend'} 
-            onClick={() => setActiveTab('ablaufend')}
+          <Tab
+            $active={activeTab === 'ablaufend'}
+            onClick={() => {
+              setActiveTab('ablaufend');
+              setSortBy('expiry');
+            }}
           >
             Ablaufend
           </Tab>
@@ -503,6 +510,7 @@ function ProductsPage() {
             <option value="name-asc">Name A–Z</option>
             <option value="category">Kategorie</option>
             <option value="location">Standort</option>
+            <option value="expiry">Ablaufdatum</option>
           </SortSelect>
         </SortWrapper>
       </TabsRow>

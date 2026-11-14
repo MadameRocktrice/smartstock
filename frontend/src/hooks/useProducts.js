@@ -7,34 +7,40 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadProducts = useCallback(async () => {
+  // loadProducts mit "silent" Option (setLoading wird dann uebersprungen)
+  const loadProducts = useCallback(async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await api.getProducts();
-      console.log('🔄 Produkte neu geladen:', data.length, 'Produkte', data);  // ← Debug
       setProducts(data);
       setError(null);
     } catch (err) {
       console.error('Fehler beim Laden der Produkte:', err);
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  }, []);
+
+  // Lokales Update eines einzelnen Produkts (fuer Optimistic Updates)
+  const updateLocal = useCallback((productId, changes) => {
+    setProducts((prev) =>
+      prev.map((p) => (p._id === productId ? { ...p, ...changes } : p))
+    );
   }, []);
 
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
-  // Live-Updates via Socket.io
+  // Live-Updates via Socket.io - silent, damit kein Loading-Flicker
   const socket = useSocket();
 
   useEffect(() => {
     if (!socket) return;
 
     const handleUpdate = () => {
-      console.log('📡 Produkt-Event empfangen → neu laden');
-      loadProducts();
+      loadProducts({ silent: true });
     };
 
     socket.on('product:created', handleUpdate);
@@ -53,5 +59,6 @@ export function useProducts() {
     loading,
     error,
     reload: loadProducts,
+    updateLocal,
   };
 }
