@@ -4,7 +4,6 @@ import { useShoppingList } from '../hooks/useShoppingList';
 import { api } from '../api/api';
 import { theme } from '../theme/theme';
 import searchIcon from '../assets/icons/search.svg';
-import filterIcon from '../assets/icons/filter.svg';
 import { shortUnit } from '../utils/units';
 
 const Container = styled.div`
@@ -54,21 +53,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const FilterButton = styled.button`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: ${theme.colors.primary};
-  border: none;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: ${theme.shadow.card};
-`;
-
 const TabsRow = styled.div`
   display: flex;
   justify-content: space-between;
@@ -106,10 +90,34 @@ const Tab = styled.button`
   `}
 `;
 
-const SortDropdown = styled.div`
+const SortWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textPrimary};
+`;
+
+const SortLabel = styled.span`
+  color: ${theme.colors.textSecondary};
+`;
+
+const SortSelect = styled.select`
+  background: transparent;
+  border: none;
+  font-family: ${theme.fonts.body};
   font-size: ${theme.fontSize.sm};
   color: ${theme.colors.textPrimary};
   cursor: pointer;
+  appearance: none;
+  padding-right: 16px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%231F2D24' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 const CategoryGroup = styled.div`
@@ -186,36 +194,48 @@ const EmptyState = styled.div`
 `;
 
 function ShoppingListPage() {
-      const { items, loading, reload } = useShoppingList();
-      const [activeTab, setActiveTab] = useState('alle');
-      const [searchQuery, setSearchQuery] = useState('');
+  const { items, loading, reload } = useShoppingList();
+  const [activeTab, setActiveTab] = useState('alle');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('category');
 
-const filteredItems = items.filter((item) => {
-  // Erst Tab-Filter
-  if (activeTab === 'offen' && item.isBought) return false;
-  if (activeTab === 'erledigt' && !item.isBought) return false;
-  
-  // Dann Such-Filter
-  if (searchQuery.trim() !== '') {
-    const query = searchQuery.toLowerCase();
-    const productName = item.product?.name || item.name || '';
-    const categoryName = item.category?.name || '';
-    const nameMatch = productName.toLowerCase().includes(query);
-    const categoryMatch = categoryName.toLowerCase().includes(query);
-    return nameMatch || categoryMatch;
-  }
-  
-  return true;
-});
+  const filteredItems = items.filter((item) => {
+    // Erst Tab-Filter
+    if (activeTab === 'offen' && item.isBought) return false;
+    if (activeTab === 'erledigt' && !item.isBought) return false;
 
-  const groupedByCategory = filteredItems.reduce((groups, item) => {
-    const categoryName = item.category?.name || 'Ohne Kategorie';
-    if (!groups[categoryName]) {
-      groups[categoryName] = [];
+    // Dann Such-Filter
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      const productName = item.product?.name || item.name || '';
+      const categoryName = item.category?.name || '';
+      const nameMatch = productName.toLowerCase().includes(query);
+      const categoryMatch = categoryName.toLowerCase().includes(query);
+      return nameMatch || categoryMatch;
     }
-    groups[categoryName].push(item);
-    return groups;
-  }, {});
+
+    return true;
+  });
+
+  // Hilfsfunktion fuer den Produktnamen (fuer Sortierung)
+  const getItemName = (item) => (item.product?.name || item.name || '').toLowerCase();
+
+  // Sortieren (fuer flache Liste und innerhalb von Gruppen alphabetisch)
+  const sortedItems = [...filteredItems].sort((a, b) =>
+    getItemName(a).localeCompare(getItemName(b), 'de')
+  );
+
+  // Nur bei Sortierung "Kategorie" gruppieren, sonst flache Liste
+  const groupedByCategory = sortBy === 'category'
+    ? sortedItems.reduce((groups, item) => {
+        const categoryName = item.category?.name || 'Ohne Kategorie';
+        if (!groups[categoryName]) {
+          groups[categoryName] = [];
+        }
+        groups[categoryName].push(item);
+        return groups;
+      }, {})
+    : null;
 
   const getRatioColors = (item) => {
     if (!item.product) {
@@ -236,18 +256,49 @@ const filteredItems = items.filter((item) => {
     }
   };
 
+  // Ein einzelnes Item rendern (wird bei beiden Ansichten genutzt)
+  const renderItem = (item) => {
+    const ratioColors = getRatioColors(item);
+    const productName = item.product?.name || item.name;
+    return (
+      <Item key={item._id} $bought={item.isBought}>
+        <ItemAmount>
+          {item.quantity} {shortUnit(item.unit) || 'Stk.'}
+        </ItemAmount>
+        <ItemName $bought={item.isBought}>
+          {productName}
+        </ItemName>
+        {item.product && item.product.minAmount != null && (
+          <Ratio
+            $bgColor={ratioColors.bg}
+            $color={ratioColors.color}
+          >
+            {item.product.currentAmount}/{item.product.minAmount} {shortUnit(item.product.unit)}
+          </Ratio>
+        )}
+        <Checkbox
+          $checked={item.isBought}
+          onClick={() => toggleItem(item)}
+          aria-label={item.isBought ? 'Rückgängig' : 'Abhaken'}
+        >
+          {item.isBought && '✓'}
+        </Checkbox>
+      </Item>
+    );
+  };
+
   return (
     <Container>
       <SearchBar>
         <SearchInputWrapper>
           <img src={searchIcon} alt="" />
-          <SearchInput placeholder="Produkt suchen" type="text" 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}/>
+          <SearchInput
+            placeholder="Produkt suchen"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </SearchInputWrapper>
-        <FilterButton aria-label="Filter">
-          <img src={filterIcon} alt="" width="48" height="48" />
-        </FilterButton>
       </SearchBar>
 
       <TabsRow>
@@ -262,50 +313,37 @@ const filteredItems = items.filter((item) => {
             Erledigt
           </Tab>
         </Tabs>
-        <SortDropdown>Sortierung: Kategorie ⌄</SortDropdown>
+        <SortWrapper>
+          <SortLabel>Sortierung:</SortLabel>
+          <SortSelect
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="category">Kategorie</option>
+            <option value="name-asc">Name A–Z</option>
+          </SortSelect>
+        </SortWrapper>
       </TabsRow>
 
       {loading ? (
         <EmptyState>Lade Einkaufsliste...</EmptyState>
-      ) : filteredItems.length === 0 ? (
+      ) : sortedItems.length === 0 ? (
         <EmptyState>Keine Einträge vorhanden</EmptyState>
-      ) : (
+      ) : groupedByCategory ? (
+        // Gruppiert nach Kategorie
         Object.entries(groupedByCategory).map(([categoryName, categoryItems]) => (
           <CategoryGroup key={categoryName}>
             <CategoryTitle>{categoryName}</CategoryTitle>
             <ItemList>
-              {categoryItems.map((item) => {
-                const ratioColors = getRatioColors(item);
-                const productName = item.product?.name || item.name;
-                return (
-                  <Item key={item._id} $bought={item.isBought}>
-                      <ItemAmount>
-                        {item.quantity} {item.unit || 'Stk.'}
-                      </ItemAmount>
-                    <ItemName $bought={item.isBought}>
-                      {productName}
-                    </ItemName>
-                    {item.product && item.product.minAmount != null && (
-                      <Ratio
-                        $bgColor={ratioColors.bg}
-                        $color={ratioColors.color}
-                      >
-                        {item.product.currentAmount}/{item.product.minAmount} {shortUnit(item.product.unit)}
-                      </Ratio>
-                    )}
-                    <Checkbox
-                      $checked={item.isBought}
-                      onClick={() => toggleItem(item)}
-                      aria-label={item.isBought ? 'Rückgängig' : 'Abhaken'}
-                    >
-                      {item.isBought && '✓'}
-                    </Checkbox>
-                  </Item>
-                );
-              })}
+              {categoryItems.map((item) => renderItem(item))}
             </ItemList>
           </CategoryGroup>
         ))
+      ) : (
+        // Flache Liste (Name A–Z)
+        <ItemList>
+          {sortedItems.map((item) => renderItem(item))}
+        </ItemList>
       )}
     </Container>
   );

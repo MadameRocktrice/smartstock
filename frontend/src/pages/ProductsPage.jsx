@@ -6,7 +6,6 @@ import { theme } from '../theme/theme';
 import { useProducts } from '../hooks/useProducts';
 import { shortUnit } from '../utils/units';
 import searchIcon from '../assets/icons/search.svg';
-import filterIcon from '../assets/icons/filter.svg';
 import moreIcon from '../assets/icons/more.svg';
 import editIcon from '../assets/icons/edit.svg';
 import deleteIcon from '../assets/icons/delete.svg';
@@ -58,22 +57,6 @@ const SearchInput = styled.input`
   &:focus {
     outline: none;
   }
-`;
-
-const FilterButton = styled.button`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: ${theme.colors.primary};
-  border: none;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: ${theme.shadow.card};
-  font-size: 20px;
 `;
 
 const TabsRow = styled.div`
@@ -335,20 +318,6 @@ function ProductsPage() {
   // Sortieren nach gewählter Sortierung
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
-      case 'name-asc':
-        return a.name.localeCompare(b.name, 'de');
-
-      case 'scarcity': {
-        // Knappste zuerst. Produkte ohne Minimum landen am Ende.
-        const ratioA = a.minAmount != null && a.minAmount > 0
-          ? a.currentAmount / a.minAmount
-          : Infinity;
-        const ratioB = b.minAmount != null && b.minAmount > 0
-          ? b.currentAmount / b.minAmount
-          : Infinity;
-        return ratioA - ratioB;
-      }
-
       case 'expiry':
         // Bald ablaufende zuerst. Produkte ohne Ablaufdatum landen am Ende.
         if (!a.expiryDate && !b.expiryDate) return 0;
@@ -356,24 +325,33 @@ function ProductsPage() {
         if (!b.expiryDate) return -1;
         return new Date(a.expiryDate) - new Date(b.expiryDate);
 
+      case 'name-asc':
+      case 'category':
       case 'location':
       default:
-        // Innerhalb der Standort-Gruppen alphabetisch
+        // Immer alphabetisch – bei gruppierter Ansicht innerhalb der Gruppe
         return a.name.localeCompare(b.name, 'de');
     }
   });
 
-  // Nur bei Sortierung "Standort" gruppieren, sonst flache Liste
-  const groupedByLocation = sortBy === 'location'
-    ? sortedProducts.reduce((groups, product) => {
-        const locationName = product.location?.name || 'Ohne Standort';
-        if (!groups[locationName]) {
-          groups[locationName] = [];
-        }
-        groups[locationName].push(product);
-        return groups;
-      }, {})
-    : null;
+  // Gruppieren nur bei 'category' oder 'location'
+  let groupedProducts = null;
+
+  if (sortBy === 'location') {
+    groupedProducts = sortedProducts.reduce((groups, product) => {
+      const name = product.location?.name || 'Ohne Standort';
+      if (!groups[name]) groups[name] = [];
+      groups[name].push(product);
+      return groups;
+    }, {});
+  } else if (sortBy === 'category') {
+    groupedProducts = sortedProducts.reduce((groups, product) => {
+      const name = product.category?.name || 'Ohne Kategorie';
+      if (!groups[name]) groups[name] = [];
+      groups[name].push(product);
+      return groups;
+    }, {});
+  }
 
   // Ampelfarbe je nach Bestand bestimmen
   const getAmountColors = (product) => {
@@ -483,17 +461,16 @@ function ProductsPage() {
 
   return (
     <Container>
-            <SearchBar>
+      <SearchBar>
         <SearchInputWrapper>
           <img src={searchIcon} alt="" />
-          <SearchInput 
-            placeholder="Produkt suchen" 
+          <SearchInput
+            placeholder="Produkt suchen"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </SearchInputWrapper>
-        <FilterButton aria-label="Filter" ><img src={filterIcon} alt="" width="48" height="48"/> </FilterButton>
       </SearchBar>
 
       <TabsRow>
@@ -523,10 +500,9 @@ function ProductsPage() {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="location">Standort</option>
             <option value="name-asc">Name A–Z</option>
-            <option value="scarcity">Knappheit</option>
-            <option value="expiry">Läuft bald ab</option>
+            <option value="category">Kategorie</option>
+            <option value="location">Standort</option>
           </SortSelect>
         </SortWrapper>
       </TabsRow>
@@ -535,18 +511,18 @@ function ProductsPage() {
         <EmptyState>Lade Produkte...</EmptyState>
       ) : sortedProducts.length === 0 ? (
         <EmptyState>Keine Produkte vorhanden</EmptyState>
-      ) : groupedByLocation ? (
-        // Gruppiert nach Standort
-        Object.entries(groupedByLocation).map(([locationName, items]) => (
-          <LocationGroup key={locationName}>
-            <LocationTitle>{locationName}</LocationTitle>
+      ) : groupedProducts ? (
+        // Gruppiert nach Standort oder Kategorie
+        Object.entries(groupedProducts).map(([groupName, items]) => (
+          <LocationGroup key={groupName}>
+            <LocationTitle>{groupName}</LocationTitle>
             <ProductList>
               {items.map((product) => renderProductItem(product))}
             </ProductList>
           </LocationGroup>
         ))
       ) : (
-        // Flache Liste (Name A–Z, Knappheit, Läuft bald ab)
+        // Flache Liste (Name A–Z, Ablaufend)
         <ProductList>
           {sortedProducts.map((product) => renderProductItem(product))}
         </ProductList>
